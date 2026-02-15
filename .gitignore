@@ -1,0 +1,15 @@
+# Ignore all .zip files
+*.zip
+
+# Ignore large asset folders
+/assets/
+/dist/
+/node_modules/
+
+# Ignore files over 100MB manually by name
+large_video.mp4
+big_database.sqlite
+
+# Ignore logs or backups
+*.log
+*.bak
