@@ -17,8 +17,7 @@ const files = {
   banks: path.join(dataDir, 'banks.json'),
   investments: path.join(dataDir, 'investments.json'),
   spotPrices: path.join(dataDir, 'spotPrices.json'),
-  focusMode: path.join(dataDir, 'focusMode.json'),
-  settings: path.join(dataDir, 'settings.json')
+  profile: path.join(dataDir, 'profile.json') 
 };
 
 /* ================= HELPERS ================= */
@@ -42,46 +41,27 @@ function writeJSON(filePath, data, res) {
   });
 }
 
-/* ================= FOCUS MODE ================= */
-app.get('/api/focus-mode', (req, res) => {
-  const focus = readJSON(files.focusMode, { focusMode: '', savingsSubgoal: '' });
-  res.json(focus);
-});
+/* ================= PROFILE ================= */
 
-app.post('/api/focus-mode', (req, res) => {
-  const { focusMode, savingsSubgoal } = req.body;
-  const data = { focusMode: focusMode || '', savingsSubgoal: savingsSubgoal || '' };
-  writeJSON(files.focusMode, data, res);
-});
-
-/* ================= SETTINGS ================= */
-
-app.get('/api/settings', (req, res) => {
-  const settings = readJSON(files.settings, {
+app.get('/api/profile', (req, res) => {
+  const profile = readJSON(files.profile, {
     monthlyIncome: 0,
     monthlyExpenses: 0,
-    emergencyMonths: 6
+    emergencyMonths: 6,
+    focusMode: "",
+    savingsSubgoal: "",
+    loanAmount: 0,
+    downPayment: 0,
+    monthsToGoal: 0
   });
-  res.json(settings);
+
+  res.json(profile);
 });
 
-app.post('/api/settings', (req, res) => {
-  const { monthlyIncome, monthlyExpenses, emergencyMonths } = req.body;
-
-  if (
-    typeof monthlyIncome !== 'number' ||
-    typeof monthlyExpenses !== 'number' ||
-    typeof emergencyMonths !== 'number'
-  ) {
-    return res.status(400).send('Invalid settings');
-  }
-
-  writeJSON(files.settings, {
-    monthlyIncome,
-    monthlyExpenses,
-    emergencyMonths
-  }, res);
+app.post('/api/profile', (req, res) => {
+  writeJSON(files.profile, req.body, res);
 });
+
 
 /* ================= METALS ================= */
 app.get('/api/metals', (req, res) => {

@@ -13,3 +13,6 @@ big_database.sqlite
 # Ignore logs or backups
 *.log
 *.bak
+
+# Use unique user data
+/data

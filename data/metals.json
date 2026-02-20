@@ -6,6 +6,13 @@
       "quantity": 0,
       "buyPrice": 0,
       "design": ""
+    },
+    {
+      "metals": "silver",
+      "weight": 1,
+      "quantity": 1,
+      "buyPrice": 35,
+      "design": "American Eagle"
     }
   ]
 }

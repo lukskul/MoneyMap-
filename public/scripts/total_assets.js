@@ -33,8 +33,9 @@ window.updateTotalAssets = async function () {
 /* ================= EMERGENCY FUND ================= */
 
 window.calculateEmergencyFund = async function () {
+
   try {
-    const res = await fetch('/api/settings');
+    const res = await fetch('/api/profile');
     if (!res.ok) return null;
 
     const settings = await res.json();
@@ -67,6 +68,7 @@ window.calculateEmergencyFund = async function () {
     console.warn("Emergency fund calculation failed", err);
     return null;
   }
+
 };
 
 /* ================= EMERGENCY UI ================= */
@@ -94,7 +96,7 @@ window.updateEmergency = async function () {
 
   if (percentFunded >= 100) {
     statusEl.textContent =
-      `If Emergency (${emergencyMonths} months) fully covered`;
+      `In Emergency (${emergencyMonths} months) fully covered`;
     statusEl.style.color = "lightgreen";
   } 
   else if (vaultTotal === 0) {
@@ -107,3 +109,4 @@ window.updateEmergency = async function () {
     statusEl.style.color = "orange";
   }
 };
+

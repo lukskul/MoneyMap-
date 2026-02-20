@@ -4,6 +4,46 @@
       "denomination": 0,
       "quantity": 0,
       "year": null
+    },
+    {
+      "denomination": 100,
+      "quantity": 100,
+      "year": null
+    },
+    {
+      "denomination": 2,
+      "quantity": 100,
+      "year": null
+    },
+    {
+      "denomination": 100,
+      "quantity": 100,
+      "year": null
+    },
+    {
+      "denomination": 100,
+      "quantity": 100,
+      "year": null
+    },
+    {
+      "denomination": 100,
+      "quantity": 100,
+      "year": null
+    },
+    {
+      "denomination": 100,
+      "quantity": 100,
+      "year": null
+    },
+    {
+      "denomination": 100,
+      "quantity": 100,
+      "year": null
+    },
+    {
+      "denomination": 100,
+      "quantity": 100,
+      "year": null
     }
   ]
 }

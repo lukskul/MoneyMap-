@@ -69,58 +69,46 @@ span {
   transform: translateY(-1px);
 }
 
-/* ================= FOCUS MODE SECTION ================= */
-#focusModeSelector {
-  background: linear-gradient(135deg, #ffffff, #f0f4f8);
-  border-left: 6px solid #3498db;
-}
+/* ================= FOCUS MODE (INSIDE SETTINGS) ================= */
 
-#focusModeSelector label {
-  font-size: 0.95rem;
-  color: #2c3e50;
-}
-
-#focusModeSelector select {
-  margin-top: 0.5rem;
-  padding: 8px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 0.9rem;
-}
-
-#affordabilitySection {
-  margin-top: 1rem;
-  padding: 12px;
-  background: #eaf2fb;
+.settings-panel #focusModeSelector {
+  border: 1px solid rgba(255,255,255,0.08);
   border-radius: 8px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-  align-items: center;
+  padding: 12px;
+  background: rgba(255,255,255,0.02);
 }
 
-.header-metric {
-  font-size: 0.9rem;
-  color: #2c3e50;
-}
-
-.header-metric strong {
-  color: #111827;
+.settings-panel #focusModeSelector summary {
   font-weight: 600;
-}
-
-#calculateAffordBtn {
-  background: #3498db;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
+  font-size: 0.95rem;
+  color: #e5e7eb;
   cursor: pointer;
 }
 
-#calculateAffordBtn:hover {
-  background: #2980b9;
+.settings-panel #focusModeSelector label {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  display: block;
+  margin-top: 10px;
 }
+
+.settings-panel #focusModeSelector select {
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #374151;
+  background: #1f2937;
+  color: white;
+  font-size: 0.9rem;
+}
+
+.settings-panel #focusModeSelector select:focus {
+  outline: none;
+  border-color: #00c896;
+  box-shadow: 0 0 0 2px rgba(0, 200, 150, 0.15);
+}
+
 
 /* ================= OVERLAYS ================= */
 .overlay,
@@ -186,6 +174,40 @@ span {
   from { transform: translateX(100%); }
   to { transform: translateX(0); }
 }
+
+.settings-panel {
+  background: #111827;
+  color: white;
+  width: 350px;
+  padding: 24px;
+
+  height: 100vh;              /* Full viewport height */
+  max-height: 100vh;          /* Prevent overflow outside screen */
+  overflow-y: auto;           /* Enable vertical scrolling */
+  overflow-x: hidden;
+
+  box-shadow: -4px 0 15px rgba(0,0,0,0.4);
+  animation: slideIn 0.3s ease;
+}
+
+.settings-panel {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar (optional, cleaner look) */
+.settings-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.settings-panel::-webkit-scrollbar-thumb {
+  background: #374151;
+  border-radius: 6px;
+}
+
+.settings-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 
 /* ================= BUTTONS ================= */
 button,
@@ -328,3 +350,95 @@ tbody tr:hover {
 }
 
 
+/* ================= HEADER METRIC INPUT ================= */
+
+.header-metric h4 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 500;
+}
+
+/* Finance-style input */
+.input {
+  background: #ffffff;
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  padding: 6px 10px;
+  width: 120px;
+
+  color: black;
+  font-size: 14px;
+  font-weight: 600;
+
+  transition: all 0.2s ease;
+}
+
+
+/* Focus glow */
+.input:focus {
+  outline: none;
+  border-color: #00c896;
+  box-shadow: 0 0 0 2px rgba(0, 200, 150, 0.15);
+}
+
+/* Placeholder styling */
+.input::placeholder {
+  color: #555;
+  font-weight: 400;
+}
+
+/* Remove number arrows */
+.input::-webkit-outer-spin-button,
+.input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.collapsible-section {
+  margin-bottom: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 0.5rem;
+}
+
+.collapsible-section summary {
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.margin-left {
+  margin-left: 5%; 
+}
+
+.settings-panel #affordabilitySection {
+  margin-top: 1rem;
+  padding: 12px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.settings-panel .header-metric h3,
+.settings-panel .header-metric h4 {
+  color: #e5e7eb;
+}
+
+.settings-panel .collapsible-section {
+  border: none;
+  padding: 0;
+  background: transparent;
+}
+
+.settings-panel .collapsible-section summary {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}

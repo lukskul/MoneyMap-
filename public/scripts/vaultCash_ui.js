@@ -66,10 +66,14 @@ if (vaultTotalEl) {
 
 async function updateVaultUI() {
   await renderVault();
-  updateEmergencyStatus();
-  if (window.updateTotalAssets) 
+
+  if (window.updateEmergency)
+    await window.updateEmergency();
+
+  if (window.updateTotalAssets)
     await window.updateTotalAssets();
 }
+
 
 
 /* ================= FORM & EVENTS ================= */

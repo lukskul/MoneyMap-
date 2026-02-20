@@ -1,36 +1,9 @@
 let pieChart;
-const portfolioOverlay = document.getElementById('portfolioOverlay');
-const portfolioToggleBtn = document.getElementById('portfolioToggleBtn');
-const closePortfolioBtn = document.getElementById('closePortfolioBtn');
 
-portfolioToggleBtn.addEventListener('click', () => {
-  portfolioOverlay.classList.add('open');
-  window.checkPortfolioBalance(); // refresh chart when opened
-});
-
-closePortfolioBtn.addEventListener('click', () => {
-  portfolioOverlay.classList.remove('open');
-});
-
-// Close when clicking outside content
-portfolioOverlay.addEventListener('click', (e) => {
-  if (e.target.id === 'portfolioOverlay') {
-    portfolioOverlay.classList.remove('open');
-  }
-});
-
-
-function createPortfolioPie(chartId, totals) {
+function createPortfolioPie(chartId, data) {
   const ctx = document.getElementById(chartId).getContext('2d');
 
   if (pieChart) pieChart.destroy();
-
-  const data = {
-    'Vault Cash': totals.vaultCash || 0,
-    'Vault Metals': totals.vaultMetals || 0,
-    'Banks': totals.banks || 0,
-    'Investments': totals.investments || 0
-  };
 
   pieChart = new Chart(ctx, {
     type: 'pie',
@@ -39,10 +12,10 @@ function createPortfolioPie(chartId, totals) {
       datasets: [{
         data: Object.values(data),
         backgroundColor: [
-          'rgba(144, 238, 144, 0.7)', // soft green
-          'rgba(173, 216, 230, 0.7)', // soft blue
-          'rgba(255, 206, 86, 0.7)',  // soft yellow
-          'rgba(255, 159, 64, 0.7)'   // soft orange
+          'rgba(144, 238, 144, 0.7)', // Vault Cash
+          'rgba(173, 216, 230, 0.7)', // Vault Metals
+          'rgba(255, 206, 86, 0.7)',  // Banks
+          'rgba(255, 159, 64, 0.7)'   // Investments
         ],
         borderColor: 'rgba(255,255,255,0.8)',
         borderWidth: 1
@@ -52,24 +25,8 @@ function createPortfolioPie(chartId, totals) {
       responsive: true,
       plugins: {
         legend: {
-          position: 'right', // can be 'left' too
-          labels: {
-            color: '#fff', // white text
-            font: { size: 14 },
-            usePointStyle: true,
-            padding: 20
-          },
-          onHover: function (e, legendItem, legend) {
-            // Animate the legend item on hover
-            const item = legend.legendItems[legendItem.index];
-            item.font = { ...item.font, weight: 'bold', size: 16 };
-            pieChart.update();
-          },
-          onLeave: function (e, legendItem, legend) {
-            const item = legend.legendItems[legendItem.index];
-            item.font = { ...item.font, weight: 'normal', size: 14 };
-            pieChart.update();
-          }
+          position: 'right',
+          labels: { color: '#fff', font: { size: 14 }, usePointStyle: true, padding: 20 }
         },
         tooltip: {
           enabled: true,
@@ -82,12 +39,62 @@ function createPortfolioPie(chartId, totals) {
   });
 }
 
-// Example usage
-const totals = {
-  vaultCash: 5000,
-  vaultMetals: 8000,
-  banks: 12000,
-  investments: 20000
-};
+async function renderIncomeFlowPie() {
+  try {
+    const res = await fetch('/api/profile');
+    if (!res.ok) return;
 
-createPortfolioPie('portfolioPieChart', totals);
+    const profile = await res.json();
+    const monthlyIncome = Number(profile.monthlyIncome || 0);
+    const monthlyExpenses = Number(profile.monthlyExpenses || 0);
+    const netIncome = monthlyIncome - monthlyExpenses;
+
+    if (netIncome <= 0) return;
+
+    // Focus mode percentages
+    const focusProfiles = {
+      growth: { vaultCash: 10, vaultMetals: 15, banks: 15, investments: 60 },
+      savings: { vaultCash: 50, vaultMetals: 10, banks: 25, investments: 15 },
+      protection: { vaultCash: 30, vaultMetals: 40, banks: 15, investments: 15 }
+    };
+
+    const focusMode = profile.focusMode || 'savings';
+    const percentages = focusProfiles[focusMode] || focusProfiles['savings'];
+
+    // Update the title dynamically
+    const titleEl = document.querySelector('.portfolio-title');
+    if (titleEl) {
+      titleEl.textContent = `Portfolio allocation ${focusMode}`;
+    }
+
+    // Calculate allocated amounts
+    const flowData = {
+      'Vault Cash': (percentages.vaultCash / 100) * netIncome,
+      'Vault Metals': (percentages.vaultMetals / 100) * netIncome,
+      'Banks': (percentages.banks / 100) * netIncome,
+      'Investments': (percentages.investments / 100) * netIncome
+    };
+
+    createPortfolioPie('portfolioPieChart', flowData);
+
+  } catch (err) {
+    console.error("Failed to render income flow pie chart:", err);
+  }
+}
+
+// Refresh pie whenever portfolio overlay opens
+const portfolioOverlay = document.getElementById('portfolioOverlay');
+const portfolioToggleBtn = document.getElementById('portfolioToggleBtn');
+const closePortfolioBtn = document.getElementById('closePortfolioBtn');
+
+portfolioToggleBtn.addEventListener('click', async () => {
+  portfolioOverlay.classList.add('open');
+  await renderIncomeFlowPie();
+});
+
+closePortfolioBtn.addEventListener('click', () => {
+  portfolioOverlay.classList.remove('open');
+});
+
+// Optional: refresh when profile changes
+window.updatePortfolioPie = renderIncomeFlowPie;
