@@ -89,23 +89,23 @@ window.updateEmergency = async function () {
   } = data;
 
   if (target === 0) {
-    statusEl.textContent = "Set expenses to calculate emergency fund.";
-    statusEl.style.color = "gray";
+    statusEl.textContent = "Set aside at least 1 month expenses! Settings - Emergency Fund.  ";
+    statusEl.style.color = "lightgray";
     return;
   }
 
   if (percentFunded >= 100) {
     statusEl.textContent =
-      `In Emergency (${emergencyMonths} months) fully covered`;
+      `Emergency Funds: ${emergencyMonths} months covered`;
     statusEl.style.color = "lightgreen";
   } 
   else if (vaultTotal === 0) {
-    statusEl.textContent = "No emergency fund saved.";
+    statusEl.textContent = "Save at least 1 month expenses for an Emergency.";
     statusEl.style.color = "lightblue";
   } 
   else {
     statusEl.textContent =
-      `${monthsCovered.toFixed(2)} Months covered in an Emergency (${percentFunded.toFixed(0)}%)`;
+      `Emergency Funds: ${monthsCovered} month covered. Goal: ${percentFunded.toFixed(0)}% Funded`;
     statusEl.style.color = "orange";
   }
 };

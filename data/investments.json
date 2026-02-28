@@ -1,9 +1,9 @@
 {
   "investments": [
     {
-      "platform": "",
-      "asset": "",
-      "value": 0
+      "platform": "Charles Schwab",
+      "asset": "Money Market",
+      "value": 100
     }
   ]
 }

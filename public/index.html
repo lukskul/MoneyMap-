@@ -12,7 +12,7 @@
 <div class="top-header">
   <div class="header-left">
     <h1>Money Map<span id="totalAssets">(Total: $0.00)</span></h1>
-    <p class="BlackFont" id="months-to-goal">0 months</p>
+    <p class="months-to-goal">0 months</p>
   </div>
 
   <div class="header-right">
@@ -51,8 +51,11 @@
     <label>Monthly Expenses</label>
     <input type="number" id="monthlyExpenses" />
 
-    <label>Emergency Fund (months)</label>
+    <label>Emergency Fund </label>
     <select id="emergencyMonths">
+      <option value="0">0 Months</option>
+      <option value="1">1 Month</option>
+      <option value="2">2 Months</option>
       <option value="3">3 Months</option>
       <option value="6">6 Months</option>
       <option value="9">9 Months</option>
@@ -96,7 +99,7 @@
     </span>
 
     <span class="header-metric">
-      <h3><span id="months-to-goal-2"></span></h3>
+      <h3><span class="months-to-goal"></span></h3>
     </span>
 
   </div>

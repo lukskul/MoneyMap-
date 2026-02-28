@@ -1,9 +1,9 @@
 {
   "accounts": [
     {
-      "bank": "",
-      "type": "",
-      "amount": 0
+      "bank": "Sdccu",
+      "type": "Checking",
+      "amount": 100
     }
   ]
 }

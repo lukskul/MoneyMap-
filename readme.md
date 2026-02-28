@@ -23,3 +23,13 @@
 ## How To start in the command line run: 
     npm install 
     npm start 
+
+
+
+## Things to Do :
+
+    -Erase the savings goal when a new goal is selected.  
+
+    -Move the buckets based on the goal selected the highest percentage bucket animates to the top of the UI. 
+
+    - Savings to Goal math Needs to accuratly depict time to reach goal adding all cash in vault and checking accounts minus emergency Funds.  

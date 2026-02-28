@@ -1,28 +1,18 @@
 {
   "vault": [
     {
-      "denomination": 0,
-      "quantity": 0,
+      "denomination": 100,
+      "quantity": 20,
       "year": null
     },
     {
       "denomination": 100,
-      "quantity": 100,
-      "year": null
-    },
-    {
-      "denomination": 2,
-      "quantity": 100,
+      "quantity": 20,
       "year": null
     },
     {
       "denomination": 100,
-      "quantity": 100,
-      "year": null
-    },
-    {
-      "denomination": 100,
-      "quantity": 100,
+      "quantity": 20,
       "year": null
     },
     {
@@ -32,23 +22,13 @@
     },
     {
       "denomination": 100,
-      "quantity": 100,
+      "quantity": 20,
       "year": null
     },
     {
       "denomination": 100,
       "quantity": 100,
       "year": null
-    },
-    {
-      "denomination": 100,
-      "quantity": 100,
-      "year": null
-    },
-    {
-      "denomination": 5,
-      "quantity": 10,
-      "year": -1
     }
   ]
 }
