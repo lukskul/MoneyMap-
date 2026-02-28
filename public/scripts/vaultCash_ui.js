@@ -74,8 +74,6 @@ async function updateVaultUI() {
     await window.updateTotalAssets();
 }
 
-
-
 /* ================= FORM & EVENTS ================= */
 
 document.addEventListener('DOMContentLoaded', () => {

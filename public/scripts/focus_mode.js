@@ -16,7 +16,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const loanInput = document.getElementById("loanInput");
   const downPaymentInput = document.getElementById("downPaymentInput");
-  const monthsToGoalEl = document.getElementById("monthsToGoal");
+  const monthsToGoalEl = document.getElementById("months-to-goal");
+  const monthsToGoalEl2 = document.getElementById("months-to-goal-2");
 
   const settingsToggleBtn = document.getElementById("settingsToggleBtn");
   const settingsOverlay = document.getElementById("settingsOverlay");
@@ -95,37 +96,70 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   /* ================= CORE CALCULATION ================= */
 
-  function calculateMonthsToGoal() {
-    const income = Number(incomeInput?.value || 0);
-    const expenses = Number(expensesInput?.value || 0);
-    const emergencyMonths = Number(emergencyInput?.value || 6);
+function calculateMonthsToGoal() {
+  const income = Number(incomeInput?.value || 0);
+  const expenses = Number(expensesInput?.value || 0);
+  const emergencyMonths = Number(emergencyInput?.value || 6);
 
-    const surplus = income - expenses;
-    if (surplus <= 0) return { months: 0, message: "No surplus available" };
+  const vaultBalance = Number(currentSettings?.vaultBalance || 0);
+  const bankBalance = Number(currentSettings?.bankBalance || 0);
 
-    const savingsPerMonth = surplus * 0.5;
+  const downPaymentValue = Number(
+    downPaymentInput?.value?.replace(/,/g, "") || 0
+  );
 
-    const vaultBalance = Number(currentSettings.vaultBalance || 0);
-    const bankBalance = Number(currentSettings.bankBalance || 0);
+  const totalCash = vaultBalance + bankBalance;
+  const requiredEmergencyFund = expenses * emergencyMonths;
+  const usableSavings = Math.max(totalCash - requiredEmergencyFund, 0);
 
-    const totalSavings = vaultBalance + bankBalance;
-    const requiredEmergencyFund = expenses * emergencyMonths;
+  const surplus = income - expenses;
 
-    const usableSavings = Math.max(totalSavings - requiredEmergencyFund, 0);
-
-    const downPaymentValue = Number(
-      downPaymentInput?.value.replace(/,/g, "") || 0
-    );
-
-    const remainingGoal = Math.max(downPaymentValue - usableSavings, 0);
-
-    if (remainingGoal === 0)
-      return { months: 0, message: "Goal already covered" };
-
-    const months = Math.ceil(remainingGoal / savingsPerMonth);
-
-    return { months, message: `${months} months` };
+  if (surplus <= 0) {
+    return { months: 0, message: "No surplus available" };
   }
+
+  const savingsPerMonth = surplus * 0.5;
+  const remainingGoal = Math.max(downPaymentValue - usableSavings, 0);
+
+  if (remainingGoal === 0) {
+    return { months: 0, message: "Goal already covered 🎉" };
+  }
+
+  const months = Math.ceil(remainingGoal / savingsPerMonth);
+
+  return {
+    months,
+    message: `Goal Reached In ${months} month${months > 1 ? "s" : ""}`
+  };
+}
+
+// Make it globally available
+window.calculateMonthsToGoal = calculateMonthsToGoal;
+
+
+/* animation for months to goal on title screen */
+
+function animateMonths(targetMonths) {
+  const el = document.getElementById("goalTimeline");
+  if (!el) return;
+
+  let current = 0;
+  const duration = 800;
+  const steps = 30;
+  const increment = targetMonths / steps;
+  const interval = duration / steps;
+
+  const counter = setInterval(() => {
+    current += increment;
+
+    if (current >= targetMonths) {
+      el.textContent = `${targetMonths} months`;
+      clearInterval(counter);
+    } else {
+      el.textContent = `${Math.ceil(current)} months`;
+    }
+  }, interval);
+}
 
   /* ================= SAVE PROFILE ================= */
 
@@ -158,6 +192,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.error(err);
       return false;
     }
+    
   }
 
   /* ================= APPLY FOCUS MODE ================= */
@@ -214,6 +249,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const result = calculateMonthsToGoal();
     monthsToGoalEl.textContent = result.message;
+    monthsToGoalEl2.textContent = result.message;
   }
 
   /* ================= HELPERS ================= */
@@ -246,27 +282,47 @@ document.addEventListener("DOMContentLoaded", async () => {
     updateAffordability();
   });
 
-  saveGoalBtn?.addEventListener("click", async () => {
-    saveGoalBtn.disabled = true;
-    saveGoalBtn.textContent = "Calculating...";
+saveGoalBtn?.addEventListener("click", async () => {
+  if (saveGoalBtn.classList.contains("is-saving")) return;
 
-    updateAffordability();
-
-    await new Promise(resolve => setTimeout(resolve, 100));
-
+  try {
+    saveGoalBtn.classList.add("is-saving");
+    saveGoalBtn.style.pointerEvents = "none";
     saveGoalBtn.textContent = "Saving...";
+
+    await updateAffordability();
+    await updateVaultUI();
 
     const success = await saveProfile();
 
-    saveGoalBtn.textContent = success ? "Saved ✓" : "Error ❌";
+    if (success) {
+      saveGoalBtn.textContent = "Saved ✓";
+      saveGoalBtn.classList.add("save-success", "animate");
 
-    setTimeout(() => {
-      saveGoalBtn.textContent = "Save";
-      saveGoalBtn.disabled = false;
-    }, 1200);
+      setTimeout(() => {
+        settingsOverlay?.classList.remove("open");
 
-    settingsOverlay?.classList.remove("open");
-  });
+        saveGoalBtn.classList.remove("save-success", "animate", "is-saving");
+        saveGoalBtn.style.pointerEvents = "auto";
+        saveGoalBtn.textContent = "Save";
+      }, 1600);
+
+      return;
+    } else {
+      saveGoalBtn.textContent = "Error";
+    }
+
+  } catch (err) {
+    console.error(err);
+    saveGoalBtn.textContent = "Error";
+  }
+
+  setTimeout(() => {
+    saveGoalBtn.classList.remove("is-saving");
+    saveGoalBtn.style.pointerEvents = "auto";
+    saveGoalBtn.textContent = "Save";
+  }, 1500);
+});
 
   /* ================= INIT ================= */
 
