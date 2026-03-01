@@ -1,11 +1,5 @@
 {
   "holdings": [
-    {
-      "metals": "silver",
-      "weight": 1,
-      "quantity": 1,
-      "buyPrice": 90,
-      "design": "American Eagle"
-    }
+
   ]
 }

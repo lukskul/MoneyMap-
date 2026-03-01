@@ -179,7 +179,7 @@ function animateMonths(targetMonths) {
     const payload = {
       monthlyIncome: Number(incomeInput?.value || 0),
       monthlyExpenses: Number(expensesInput?.value || 0),
-      emergencyMonths: Number(emergencyInput?.value || 6),
+      emergencyMonths: Number(emergencyInput?.value || 0),
       focusMode: focusDropdown?.value || "",
       savingsSubgoal: savingsSubgoal?.value || "",
       loanAmount: Number(loanInput?.value.replace(/,/g, "") || 0),
