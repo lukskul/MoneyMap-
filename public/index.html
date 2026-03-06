@@ -11,8 +11,9 @@
   <!-- ================= Top Header ================= -->
 <div class="top-header">
   <div class="header-left">
-    <h1>Money Map<span id="totalAssets">(Total: $0.00)</span></h1>
-    <p class="months-to-goal">0 months</p>
+    <h1>Money Map</h1>
+    <span id="totalAssets">(Total: $0.00)</span>
+    <p class="months-to-goal">Need to Work More to reach this Goal!</p>
   </div>
 
   <div class="header-right">
@@ -100,6 +101,7 @@
 
     <span class="header-metric">
       <h3><span class="months-to-goal"></span></h3>
+      <span id="loanHelper" class="help-icon">?</span>
     </span>
 
   </div>
@@ -250,7 +252,7 @@
         <button id="bankSubmit" type="submit" disabled>Add</button>
       </form>
     </div>
-    <details class="collapsible-section"><summary>🔐 View Holdings</summary>
+    <details class="collapsible-section" open><summary>🔐 View Holdings</summary>
       <table>
         <thead>
           <tr>
@@ -293,7 +295,7 @@
           <button id="investmentSubmit" type="submit" disabled>Add</button>
         </form>
       </div>
-      <details class="collapsible-section"><summary>🔐 View Holdings</summary>
+      <details class="collapsible-section" open><summary>🔐 View Holdings</summary>
         <table>
           <thead>
             <tr>

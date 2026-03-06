@@ -72,6 +72,9 @@ async function updateVaultUI() {
 
   if (window.updateTotalAssets)
     await window.updateTotalAssets();
+
+  if (window.recalculateMonthsToGoal)
+  await window.recalculateMonthsToGoal();
 }
 
 /* ================= FORM & EVENTS ================= */

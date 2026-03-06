@@ -63,11 +63,11 @@ window.calculateEmergencyFund = async function () {
       monthsCovered,
       percentFunded: Math.min(percentFunded, 100)
     };
-
+    
   } catch (err) {
     console.warn("Emergency fund calculation failed", err);
     return null;
-  }
+  } 
 
 };
 

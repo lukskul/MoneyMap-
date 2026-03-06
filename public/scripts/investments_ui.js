@@ -1,13 +1,11 @@
 /* ================= INVESTMENTS ================= */
 
-// Fetch investments from server
 async function fetchInvestments() {
   const res = await fetch('/api/investments');
   const data = await res.json();
   return data.investments || [];
 }
 
-// Add a new investment via API
 async function addInvestment(entry) {
   await fetch('/api/investments', {
     method: 'POST',
@@ -16,7 +14,22 @@ async function addInvestment(entry) {
   });
 }
 
-// Render investments table
+async function updateInvestment(id, updatedValue) {
+  await fetch(`/api/investments/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ value: updatedValue })
+  });
+}
+
+async function deleteInvestment(id) {
+  await fetch(`/api/investments/${id}`, {
+    method: 'DELETE'
+  });
+}
+
+/* ================= RENDER ================= */
+
 function renderInvestments(investments) {
   const table = document.getElementById('investmentTable');
   table.innerHTML = '';
@@ -24,33 +37,87 @@ function renderInvestments(investments) {
   let total = 0;
 
   investments.forEach(entry => {
+    const value = Number(entry.value);
+    total += value;
+
     const row = document.createElement('tr');
+
     row.innerHTML = `
       <td>${entry.platform}</td>
       <td>${entry.asset}</td>
-      <td>$${Number(entry.value).toFixed(2)}</td>
+      <td>
+        <input 
+          type="number" 
+          value="${value}" 
+          min="0" 
+          data-id="${entry.id}" 
+          class="editInvestmentValue"
+        />
+      </td>
+      <td>
+        <button data-id="${entry.id}" class="deleteInvestmentBtn">
+          Delete
+        </button>
+      </td>
     `;
-    table.appendChild(row);
 
-    total += Number(entry.value);
+    table.appendChild(row);
   });
 
-  document.getElementById('investmentTotal').textContent = `(Total: $${total.toFixed(2)})`;
+  document.getElementById('investmentTotal').textContent =
+    `(Total: $${total.toFixed(2)})`;
 
-  // Expose for total-assets calculation
+  // Update bucketTotals for total-assets
   window.bucketTotals = window.bucketTotals || {};
   window.bucketTotals.investments = total;
+
+  attachInvestmentEvents();
 }
 
-// Update UI
+/* ================= EVENT ATTACH ================= */
+
+function attachInvestmentEvents() {
+
+  // Edit value
+  document.querySelectorAll('.editInvestmentValue').forEach(input => {
+    input.addEventListener('change', async (e) => {
+      const id = e.target.dataset.id;
+      const newValue = Number(e.target.value);
+
+      if (newValue >= 0) {
+        await updateInvestment(id, newValue);
+        await updateInvestmentsUI();
+      }
+    });
+  });
+
+  // Delete row
+  document.querySelectorAll('.deleteInvestmentBtn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const id = e.target.dataset.id;
+
+      if (confirm('Delete this investment?')) {
+        await deleteInvestment(id);
+        await updateInvestmentsUI();
+      }
+    });
+  });
+}
+
+/* ================= UPDATE UI ================= */
+
 async function updateInvestmentsUI() {
   const investments = await fetchInvestments();
   renderInvestments(investments);
-  window.updateTotalAssets && window.updateTotalAssets();
+
+  if (window.updateTotalAssets)
+    await window.updateTotalAssets();
 }
 
 /* ================= FORM INTERACTIONS ================= */
+
 document.addEventListener('DOMContentLoaded', () => {
+
   const toggleBtn = document.getElementById('toggleInvestmentBtn');
   const wrapper = document.getElementById('investmentFormWrapper');
 
@@ -61,23 +128,25 @@ document.addEventListener('DOMContentLoaded', () => {
   const submit = document.getElementById('investmentSubmit');
 
   // Toggle form visibility
-  toggleBtn.addEventListener('click', () => {
-    wrapper.classList.toggle('open');
+  toggleBtn?.addEventListener('click', () => {
+    wrapper?.classList.toggle('open');
   });
 
-  // Form validation
+  // Validation
   function validate() {
     submit.disabled =
       !platform.value.trim() ||
       !type.value ||
       !amount.value ||
-      amount.value <= 0;
+      Number(amount.value) <= 0;
   }
 
-  [platform, type, amount].forEach(el => el.addEventListener('input', validate));
+  [platform, type, amount].forEach(el =>
+    el.addEventListener('input', validate)
+  );
 
-  // Form submission
-  form.addEventListener('submit', async (e) => {
+  // Submit
+  form?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const entry = {
@@ -87,9 +156,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     await addInvestment(entry);
+
     form.reset();
     validate();
-    updateInvestmentsUI();
+    await updateInvestmentsUI();
   });
 
   validate();
@@ -98,11 +168,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* ================= TOTAL ASSETS HOOK ================= */
 
-// Return investments total for total-assets.js
 window.getInvestmentsTotal = async function () {
   const investments = await fetchInvestments();
-  return investments.reduce((sum, entry) => sum + Number(entry.value), 0);
+  return investments.reduce(
+    (sum, entry) => sum + Number(entry.value),
+    0
+  );
 };
 
-// Register bucket for total-assets.js
-window.registerAssetBucket && window.registerAssetBucket('investments', window.getInvestmentsTotal);
+window.registerAssetBucket &&
+  window.registerAssetBucket('investments', window.getInvestmentsTotal);

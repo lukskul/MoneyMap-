@@ -120,50 +120,135 @@ app.post('/api/vault', (req, res) => {
   writeJSON(files.vault, vault, res);
 });
 
-/* ================= BANKS ================= */
+/* ================= BANKS API ================= */
+
+// GET all accounts
 app.get('/api/banks', (req, res) => {
   const banks = readJSON(files.banks, { accounts: [] });
   res.json(banks);
 });
 
+// POST new account
 app.post('/api/banks', (req, res) => {
   const { bank, type, amount } = req.body;
 
   if (
-    typeof bank !== 'string' ||
-    typeof type !== 'string' ||
-    typeof amount !== 'number' ||
-    amount <= 0
+    !bank || !type ||
+    typeof amount !== 'number' || amount <= 0
   ) {
     return res.status(400).send('Invalid bank account');
   }
 
   const banks = readJSON(files.banks, { accounts: [] });
 
-  banks.accounts.push({
+  const newAccount = {
+    id: Date.now().toString(), // unique ID
     bank,
     type,
     amount
-  });
+  };
 
+  banks.accounts.push(newAccount);
+  writeJSON(files.banks, banks, res);
+});
+
+// PUT update account amount
+app.put('/api/banks/:id', (req, res) => {
+  const { id } = req.params;
+  const { amount } = req.body;
+
+  if (typeof amount !== 'number' || amount < 0) {
+    return res.status(400).send('Invalid amount');
+  }
+
+  const banks = readJSON(files.banks, { accounts: [] });
+  const account = banks.accounts.find(a => a.id === id);
+
+  if (!account) return res.status(404).send('Bank account not found');
+
+  account.amount = amount;
+  writeJSON(files.banks, banks, res);
+});
+
+// DELETE account
+app.delete('/api/banks/:id', (req, res) => {
+  const { id } = req.params;
+  const banks = readJSON(files.banks, { accounts: [] });
+
+  const index = banks.accounts.findIndex(a => a.id === id);
+  if (index === -1) return res.status(404).send('Bank account not found');
+
+  banks.accounts.splice(index, 1);
   writeJSON(files.banks, banks, res);
 });
 
 /* ================= INVESTMENTS ================= */
+
+// GET
 app.get('/api/investments', (req, res) => {
   const investments = readJSON(files.investments, { investments: [] });
   res.json(investments);
 });
 
+// POST (Add new)
 app.post('/api/investments', (req, res) => {
   const { platform, asset, value } = req.body;
-  if (!platform || !asset || typeof value !== 'number') return res.status(400).send('Invalid investment');
 
-  const investments = readJSON(files.investments, { investments: [] });
-  investments.investments.push({ platform, asset, value });
-  writeJSON(files.investments, investments, res);
+  if (!platform || !asset || typeof value !== 'number') {
+    return res.status(400).send('Invalid investment');
+  }
+
+  const data = readJSON(files.investments, { investments: [] });
+
+  const newInvestment = {
+    id: Date.now().toString(), // simple unique id
+    platform,
+    asset,
+    value
+  };
+
+  data.investments.push(newInvestment);
+  writeJSON(files.investments, data, res);
 });
 
+// PUT (Update value)
+app.put('/api/investments/:id', (req, res) => {
+  const { id } = req.params;
+  const { value } = req.body;
+
+  if (typeof value !== 'number') {
+    return res.status(400).send('Invalid value');
+  }
+
+  const data = readJSON(files.investments, { investments: [] });
+
+  const investment = data.investments.find(inv => inv.id === id);
+
+  if (!investment) {
+    return res.status(404).send('Investment not found');
+  }
+
+  investment.value = value;
+
+  writeJSON(files.investments, data, res);
+});
+
+// DELETE
+app.delete('/api/investments/:id', (req, res) => {
+  const { id } = req.params;
+
+  const data = readJSON(files.investments, { investments: [] });
+
+  const index = data.investments.findIndex(inv => inv.id === id);
+
+  if (index === -1) {
+    return res.status(404).send('Investment not found');
+  }
+
+  data.investments.splice(index, 1);
+
+  writeJSON(files.investments, data, res);
+});
 /* ================= SPOT PRICES ================= */
 app.get('/api/spot-prices', (req, res) => {
   const prices = readJSON(files.spotPrices, {});

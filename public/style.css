@@ -10,7 +10,7 @@ body {
 h1 {
   font-size: 2rem;
   color: #2c3e50;
-  margin-bottom: 1rem;
+  margin-bottom: 1.2rem;
 }
 
 h2 {
@@ -20,8 +20,15 @@ h2 {
 }
 
 span {
+  font-size: 1rem;
+  color: #555;
+  font-weight: bold
+}
+
+.months-to-goal {
   font-size: 0.9rem;
   color: #555;
+  font-weight: bold; 
 }
 
 /* ================= TOP HEADER ================= */
@@ -45,7 +52,7 @@ span {
   display: flex;
   align-items: center;
   gap: 14px;
-  margin: 0;
+  margin-bottom: 5%;
   font-size: 1.6rem;
   color: #1f2937;
 }

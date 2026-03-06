@@ -1,5 +1,10 @@
 {
   "investments": [
-
+    {
+      "id": "1772804344937",
+      "platform": "Charles Schwab",
+      "asset": "Brokerage",
+      "value": 0
+    }
   ]
 }
