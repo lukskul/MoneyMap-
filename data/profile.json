@@ -1,13 +1,13 @@
 {
-  "monthlyIncome": 500,
+  "monthlyIncome": 2000,
   "monthlyExpenses": 1000,
-  "emergencyMonths": 0,
+  "emergencyMonths": 6,
   "goal": {
     "type": "savings",
-    "subgoal": "loan",
-    "amount": 0,
-    "loanAmount": 600000,
-    "downPayment": 60000
+    "subgoal": "custom",
+    "amount": 9000,
+    "loanAmount": 0,
+    "downPayment": 0
   },
-  "monthsToGoal": 0
+  "monthsToGoal": 18
 }

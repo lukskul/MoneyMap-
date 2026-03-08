@@ -13,7 +13,7 @@
   <div class="header-left">
     <h1>Money Map</h1>
     <span id="totalAssets">(Total: $0.00)</span>
-    <p class="months-to-goal">Need to Work More to reach this Goal!</p>
+    <p class="months-to-goal">Click Settings Icon to Create a Goal!</p>
   </div>
 
   <div class="header-right">
@@ -63,52 +63,49 @@
       <option value="12">12 Months</option>
     </select>
 
-<section id="focusModeSection" style="margin-bottom: 1.5rem;">
-  <label for="focusModeDropdown"><strong>Portfolio is set for:</strong></label>
-  <select id="focusModeDropdown">
-    <option value="">--Select Mode--</option>
-    <option value="growth">Growth</option>
-    <option value="savings">Savings</option>
-    <option value="protection">Protection</option>
-  </select>
-
-  <!-- ================= SAVINGS SUBGOAL ================= -->
-  <div id="affordabilitySection" style="display:none; margin-top:1rem;">
-    <label for="savingsSubgoalDropdown">Savings Goal Type:</label>
-    <select id="savingsSubgoalDropdown">
-      <option value="">Select Goal Type</option>
-      <option value="loan">Loan Savings (Used for Larger Purchases House/Car)</option>
-      <option value="custom">Cash Savings</option>
+  <section id="focusModeSection" style="margin-bottom: 1.5rem;">
+    <label for="focusModeDropdown"><strong>Set Your Goal:</strong></label>
+    <select id="focusModeDropdown">
+      <option value="">--Generate Cash Flow--</option>
+      <option value="growth">Growth</option>
+      <option value="savings">Savings</option>
+      <option value="protection">Protection</option>
     </select>
 
-    <!-- Loan inputs -->
-    <div id="loanInputs" style="display:none;">
+    <!-- ================= SAVINGS SUBGOAL ================= -->
+    <div id="affordabilitySection" style="display:none; margin-top:1rem;">
+      <label for="savingsSubgoalDropdown">Savings Goal Type:</label>
+      <select id="savingsSubgoalDropdown">
+        <option value="">Select Goal Type</option>
+        <option value="loan">Loan Savings (Used for Larger Purchases House/Car)</option>
+        <option value="custom">Cash Savings</option>
+      </select>
+
+      <!-- Loan inputs -->
+      <div id="loanInputs" style="display:none;"><span id="loanHelper" class="help-icon">?</span>
+        <span class="header-metric">
+          <h4>Loan: <input class="input" id="loanInput" type="text" inputmode="numeric" placeholder="Loan amount" /></h4>
+        </span>
+        <span class="header-metric">
+          <h4>Down Payment: <input class="input" id="downPaymentInput" type="text" inputmode="numeric" placeholder="Down payment"/></h4>
+        </span>
+      </div>
+
+      <!-- Custom savings input -->
+      <div id="customSavingsInput" style="display:none;">
+        <span class="header-metric">
+          <h4>Savings Goal: <input class="input" id="customGoalInput" type="text" inputmode="numeric" placeholder="Goal amount" /></h4>
+        </span>
+      </div>
+
+      <!-- Months to goal -->
       <span class="header-metric">
-        <h4>Loan: <input class="input" id="loanInput" type="text" inputmode="numeric" placeholder="Loan amount" /></h4>
-      </span>
-      <span class="header-metric">
-        <h4>Down Payment: <input class="input" id="downPaymentInput" type="text" inputmode="numeric" placeholder="Down payment"/></h4>
+        <h3><span class="months-to-goal"></span></h3>
       </span>
     </div>
+  </section>
 
-    <!-- Custom savings input -->
-    <div id="customSavingsInput" style="display:none;">
-      <span class="header-metric">
-        <h4>Savings Goal: <input class="input" id="customGoalInput" type="text" inputmode="numeric" placeholder="Goal amount" /></h4>
-      </span>
-    </div>
-
-    <!-- Months to goal -->
-    <span class="header-metric">
-      <h3><span class="months-to-goal"></span></h3>
-      <span id="loanHelper" class="help-icon">?</span>
-    </span>
-  </div>
-</section>
-
-</section>
-
-        <button id="saveGoalBtn">Save</button>
+  <button id="saveGoalBtn">Save</button>
 
   </div>
 </div>

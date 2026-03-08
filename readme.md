@@ -28,8 +28,8 @@
 
 ## Things to Do :
 
-    -Erase the savings goal when a new goal is selected.  
+    -Change the goal message to protection and growth when selected
 
     -Move the buckets based on the goal selected the highest percentage bucket animates to the top of the UI. 
 
-    - Savings to Goal math Needs to accuratly depict time to reach goal adding all cash in vault and checking accounts minus emergency Funds.  
+    - Pie chart math needs to reflect percentage changes accuratly.  
