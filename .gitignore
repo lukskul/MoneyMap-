@@ -15,4 +15,4 @@ big_database.sqlite
 *.bak
 
 # Use unique user data
-/data
+
