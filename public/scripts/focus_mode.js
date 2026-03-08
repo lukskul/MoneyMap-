@@ -6,9 +6,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   /* ================= DOM ELEMENTS ================= */
 
   const focusDropdown = document.getElementById("focusModeDropdown");
-  const savingsSection = document.getElementById("savingsSection");
   const savingsSubgoal = document.getElementById("savingsSubgoalDropdown");
   const affordabilitySection = document.getElementById("affordabilitySection");
+  const loanInputs = document.getElementById("loanInputs");
+  const customSavingsInput = document.getElementById("customSavingsInput");
 
   const incomeInput = document.getElementById("monthlyIncome");
   const expensesInput = document.getElementById("monthlyExpenses");
@@ -18,6 +19,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const downPaymentInput = document.getElementById("downPaymentInput");
   const settingsToggleBtn = document.getElementById("settingsToggleBtn");
   const settingsOverlay = document.getElementById("settingsOverlay");
+  const customGoalInput = document.getElementById("customGoalInput");
 
   const vaultPercent = document.getElementById("vaultPercent");
   const banksPercent = document.getElementById("banksPercent");
@@ -25,6 +27,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   const investmentPercent = document.getElementById("investmentPercent");
 
   const saveGoalBtn = document.getElementById("saveGoalBtn");
+
+  let currentMonths = 0;
+  let monthsAnimationFrame = null;
 
   /* ================= SETTINGS STATE ================= */
 
@@ -60,37 +65,64 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   /* ================= LOAD PROFILE ================= */
 
-  async function loadProfile() {
-    try {
-      const res = await fetch("/api/profile");
-      if (!res.ok) return;
+async function loadProfile() {
+  try {
 
-      const data = await res.json();
-      if (!data) return;
+    const res = await fetch("/api/profile");
+    if (!res.ok) return;
 
-      currentSettings = { ...currentSettings, ...data };
+    const data = await res.json();
+    if (!data) return;
 
-      incomeInput.value = data.monthlyIncome || "";
-      expensesInput.value = data.monthlyExpenses || "";
-      emergencyInput.value = data.emergencyMonths || 0;
+    currentSettings = { ...currentSettings, ...data };
 
-      focusDropdown.value = data.focusMode || "";
-      savingsSubgoal.value = data.savingsSubgoal || "";
+    incomeInput.value = data.monthlyIncome || "";
+    expensesInput.value = data.monthlyExpenses || "";
+    emergencyInput.value = data.emergencyMonths || 0;
 
-      if (data.loanAmount) loanInput.value = formatMoney(data.loanAmount);
-      if (data.downPayment) downPaymentInput.value = formatMoney(data.downPayment);
+    const goal = data.goal || {};
 
-      applyFocusMode(focusDropdown.value);
-      await updateMonthsUI();
+    // focus mode
+    focusDropdown.value = goal.type || "";
 
-    } catch {
-      console.log("No saved profile yet.");
+    // savings subgoal
+    savingsSubgoal.value = goal.subgoal || "";
+
+    // savings goal
+    if (goal.amount) {
+      customGoalInput.value = formatMoney(goal.amount);
     }
-  }
 
+    // loan inputs
+    if (goal.loanAmount) {
+      loanInput.value = formatMoney(goal.loanAmount);
+    }
+
+    if (goal.downPayment) {
+      downPaymentInput.value = formatMoney(goal.downPayment);
+    }
+
+    applyFocusMode(focusDropdown.value);
+    applySavingsSubgoal(savingsSubgoal.value);
+
+    if (goal.type === "savings") {
+
+      const result = await calculateMonthsToGoal();
+
+      if (result) {
+        monthsToGoal = result.months || 0;
+        animateMonths(monthsToGoal);
+      }
+
+    }
+
+  } catch (err) {
+    console.log("No saved profile yet.");
+  }
+}
   /* ================= CORE CALCULATION ================= */
 
-  async function calculateMonthsToGoal() {
+async function calculateMonthsToGoal() {
   const emergencyData = await window.calculateEmergencyFund();
   if (!emergencyData) return { months: 0, message: "Emergency data unavailable" };
 
@@ -109,16 +141,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   const usableSavings = Math.max(totalCash - emergencyTarget, 0);
 
   // How much is left to reach the goal
-  const remainingGoal = Math.max(downPaymentValue - usableSavings, 0);
+  // const remainingGoal = Math.max(downPaymentValue - usableSavings, 0);
+  const goalAmount = getGoalAmount();
+  const remainingGoal = Math.max(goalAmount - usableSavings, 0);
 
   const surplus = income - expenses;
   if (surplus <= 0) return { months: 0, message: "No surplus available" };
 
   const savingsPerMonth = surplus * 0.5; // adjust % if needed
-  if (remainingGoal === 0) return { months: 0, message: "Goal already covered 🎉" };
+  if (remainingGoal === 0) return { months: 0, message: "Goal Reached 🎉" };
 
-  console.log(savingsPerMonth)
-  
   const months = Math.ceil(remainingGoal / savingsPerMonth);
 
   return {
@@ -131,9 +163,8 @@ window.calculateMonthsToGoal = calculateMonthsToGoal;
 
   /* ================= ANIMATION ================= */
 
-let monthsAnimationFrame = null;
-
 function animateMonths(targetMonths) {
+
   const els = document.querySelectorAll(".months-to-goal");
   if (!els.length) return;
 
@@ -141,32 +172,40 @@ function animateMonths(targetMonths) {
     cancelAnimationFrame(monthsAnimationFrame);
   }
 
-  const duration = 800;
-  const start = performance.now();
-  const startValue = 0;
+  const startValue = currentMonths;
+  const duration = 900;
+  const startTime = performance.now();
 
-  function animate(currentTime) {
-    const elapsed = currentTime - start;
-    const progress = Math.min(elapsed / duration, 1);
+  function easeOutCubic(t) {
+    return 1 - Math.pow(1 - t, 3);
+  }
 
-    const currentValue = Math.ceil(
-      startValue + (targetMonths - startValue) * progress
+  function frame(time) {
+
+    const progress = Math.min((time - startTime) / duration, 1);
+    const eased = easeOutCubic(progress);
+
+    const value = Math.round(
+      startValue + (targetMonths - startValue) * eased
     );
 
-    els.forEach(el => {
-      const goalDate = getGoalDate(targetMonths);
+    const goalDate = getGoalDate(targetMonths);
 
+    els.forEach(el => {
       el.textContent =
-        `${currentValue} month${currentValue !== 1 ? "s" : ""} to Savings Goal • ${goalDate}`;
+        `${value} month${value !== 1 ? "s" : ""} • ${goalDate}`;
     });
 
     if (progress < 1) {
-      monthsAnimationFrame = requestAnimationFrame(animate);
+      monthsAnimationFrame = requestAnimationFrame(frame);
+    } else {
+      currentMonths = targetMonths;
     }
   }
 
-  monthsAnimationFrame = requestAnimationFrame(animate);
+  monthsAnimationFrame = requestAnimationFrame(frame);
 }
+
 
   /* ================= SAVE PROFILE ================= */
 
@@ -177,23 +216,31 @@ async function saveProfile() {
   if (focusDropdown?.value === "savings") {
     const result = await calculateMonthsToGoal();
     monthsToGoal = result?.months || 0;
-
-    // update UI only in savings mode
-    animateMonths(monthsToGoal);
+    animateMonths(result.months);
   }
+
+  // Clean number parsing helper
+  const parseMoney = (val) =>
+    Number((val || "").replace(/,/g, "")) || 0;
+
+  const goal = {
+    type: focusDropdown?.value || "",
+    subgoal: savingsSubgoal?.value || "",
+    amount: parseMoney(customGoalInput?.value),
+    loanAmount: parseMoney(loanInput?.value),
+    downPayment: parseMoney(downPaymentInput?.value)
+  };
 
   const payload = {
     monthlyIncome: Number(incomeInput?.value || 0),
     monthlyExpenses: Number(expensesInput?.value || 0),
     emergencyMonths: Number(emergencyInput?.value || 0),
-    focusMode: focusDropdown?.value || "",
-    savingsSubgoal: savingsSubgoal?.value || "",
-    loanAmount: Number(loanInput?.value.replace(/,/g, "") || 0),
-    downPayment: Number(downPaymentInput?.value.replace(/,/g, "") || 0),
+    goal,
     monthsToGoal
   };
 
   try {
+
     const res = await fetch("/api/profile", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -210,33 +257,55 @@ async function saveProfile() {
     return false;
   }
 }
+  /* ================= APPLY FOCUS MODE And Savings Sub Goals================= */
 
-  /* ================= APPLY FOCUS MODE ================= */
+function applyFocusMode(mode) {
+  if (!focusProfiles[mode]) return;
 
-  function applyFocusMode(mode) {
-    if (!focusProfiles[mode]) return;
+  const profile = focusProfiles[mode];
 
-    const profile = focusProfiles[mode];
+  vaultPercent.textContent = profile.vault + "%";
+  banksPercent.textContent = profile.banks + "%";
+  metalsPercent.textContent = profile.metals + "%";
+  investmentPercent.textContent = profile.investments + "%";
 
-    vaultPercent.textContent = profile.vault + "%";
-    banksPercent.textContent = profile.banks + "%";
-    metalsPercent.textContent = profile.metals + "%";
-    investmentPercent.textContent = profile.investments + "%";
+  if (mode === "savings") {
+    affordabilitySection.style.display = "block";
+  } else {
+    affordabilitySection.style.display = "none";
 
-    if (mode === "savings") {
-      savingsSection.style.display = "block";
-    } else {
-      savingsSection.style.display = "none";
-      affordabilitySection.style.display = "none";
 
-      document.querySelectorAll(".months-to-goal").forEach(el => {
-        el.textContent = "";
-      });
-    }
+    document.querySelectorAll(".months-to-goal").forEach(el => {
+      el.textContent = "";
+    });
   }
+}
+
+function applySavingsSubgoal(type) {
+
+  if (!loanInputs || !customSavingsInput) return;
+
+  if (type === "loan") {
+
+    loanInputs.style.display = "block";
+    customSavingsInput.style.display = "none";
+
+  } else if (type === "custom") {
+
+    loanInputs.style.display = "none";
+    customSavingsInput.style.display = "block";
+
+  } else {
+
+    loanInputs.style.display = "none";
+    customSavingsInput.style.display = "none";
+
+  }
+}
 
   /* ================= AFFORDABILITY ================= */
-document.getElementById("loanHelper")?.addEventListener("click", () => {
+
+  document.getElementById("loanHelper")?.addEventListener("click", () => {
 
   const income = Number(incomeInput.value || 0);
 
@@ -259,7 +328,8 @@ document.getElementById("loanHelper")?.addEventListener("click", () => {
   async function updateAffordability() {
 
   const isSavingsMode =
-    focusDropdown.value === "savings" && savingsSubgoal.value;
+    // focusDropdown.value === "savings" && savingsSubgoal.value;
+    focusDropdown.value === "savings" && savingsSubgoal.value !== "";
 
   affordabilitySection.style.display = isSavingsMode ? "block" : "none";
 
@@ -270,43 +340,36 @@ document.getElementById("loanHelper")?.addEventListener("click", () => {
     return;
   }
 
-  // Only update months if user has entered numbers
-  if (loanInput.value && downPaymentInput.value) {
-    await updateMonthsUI();
+function getGoalAmount() {
+
+  if (savingsSubgoal.value === "loan") {
+    const loan = Number(loanInput.value.replace(/,/g, "")) || 0;
+    const down = Number(downPaymentInput.value.replace(/,/g, "")) || 0;
+    return loan + down;
   }
+
+  if (savingsSubgoal.value === "custom") {
+    return Number(customGoalInput.value.replace(/,/g, "")) || 0;
+  }
+
+  return 0;
 }
 
-  async function updateMonthsUI() {
-  const result = await calculateMonthsToGoal();
-  if (!result) return null;
+async function updateGoalMessage() {
 
-  if (result.months === 0) {
-    document.querySelectorAll(".months-to-goal").forEach(el => {
-      el.textContent = result.message;
-    });
-    return result;
+  const result = await calculateMonthsToGoal();
+  if (!result) return;
+
+  const messageEl = document.querySelector(".goal-message");
+  if (messageEl) {
+    messageEl.textContent = result.message;
   }
 
+  currentMonths = result.months;
   animateMonths(result.months);
-  return result;
 }
 
   /* ================= HELPERS ================= */
-
-function getGoalDate(months) {
-
-  if (!months || months === 0) return "Now";
-
-  const today = new Date();
-  const goalDate = new Date(today);
-
-  goalDate.setMonth(goalDate.getMonth() + months);
-
-  return goalDate.toLocaleString("default", {
-    month: "long",
-    year: "numeric"
-  });
-}
 
 function formatMoney(value) {
   return Number(value).toLocaleString();
@@ -324,7 +387,11 @@ function formatMoneyInput(input) {
     await updateAffordability();
   });
 
-  savingsSubgoal?.addEventListener("change", updateAffordability);
+  // savingsSubgoal?.addEventListener("change", updateAffordability);
+  savingsSubgoal?.addEventListener("change", () => {
+  applySavingsSubgoal(savingsSubgoal.value);
+  updateAffordability();
+});
 
   loanInput?.addEventListener("input", async () => {
     formatMoneyInput(loanInput);
@@ -376,11 +443,12 @@ function formatMoneyInput(input) {
     }, 1500);
   });
 
-incomeInput?.addEventListener("input", updateMonthsUI);
-expensesInput?.addEventListener("input", updateMonthsUI);
-emergencyInput?.addEventListener("input", updateMonthsUI);
+incomeInput?.addEventListener("input", updateGoalMessage);
+expensesInput?.addEventListener("input", updateGoalMessage);
+emergencyInput?.addEventListener("input", updateGoalMessage);
 
   /* ================= INIT ================= */
 
   await loadProfile();
+  }
 });

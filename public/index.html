@@ -66,16 +66,16 @@
 
 
 <!-- ================= FOCUS MODE + SUBGOAL ================= -->
-<section id="focusModeSelector" style="margin-bottom: 1.5rem;">
+<!-- <section id="focusModeSelector" style="margin-bottom: 1.5rem;">
   <label for="focusModeDropdown"><strong>Portfolio is set for:</strong></label>
   <select id="focusModeDropdown">
     <option value="">--Select Mode--</option>
     <option value="growth">Growth</option>
     <option value="savings">Savings</option>
     <option value="protection">Protection</option>
-  </select>
+  </select>-->
   <!-- ================= SAVINGS SUBGOAL ================= -->
-  <div id="savingsSection" style="display:none; margin-top:1rem;">
+  <!--<div id="savingsSection" style="display:none; margin-top:1rem;">
 
     <label for="savingsSubgoalDropdown">
       <strong>Saving For:</strong>
@@ -88,9 +88,9 @@
       <option value="car">Car / Transportation</option>
       <option value="emergency">Emergency Fund</option>
       <option value="other">Other</option>
-    </select>
+    </select> -->
 
-    <div class="header-left" id="affordabilitySection" style="display:none;">
+    <!-- <div class="header-left" id="affordabilitySection" style="display:none;">
     <span class="header-metric">
       <h4>Loan: <input class="input" id="loanInput" type="text" inputmode="numeric" placeholder="Loan amount" /></h4>
     </span>
@@ -102,9 +102,52 @@
     <span class="header-metric">
       <h3><span class="months-to-goal"></span></h3>
       <span id="loanHelper" class="help-icon">?</span>
-    </span>
+    </span> -->
 
+
+<section id="focusModeSection" style="margin-bottom: 1.5rem;">
+  <label for="focusModeDropdown"><strong>Portfolio is set for:</strong></label>
+  <select id="focusModeDropdown">
+    <option value="">--Select Mode--</option>
+    <option value="growth">Growth</option>
+    <option value="savings">Savings</option>
+    <option value="protection">Protection</option>
+  </select>
+
+  <!-- ================= SAVINGS SUBGOAL ================= -->
+  <div id="affordabilitySection" style="display:none; margin-top:1rem;">
+    <label for="savingsSubgoalDropdown">Savings Goal Type:</label>
+    <select id="savingsSubgoalDropdown">
+      <option value="">Select Goal Type</option>
+      <option value="loan">Loan Savings (Used for Larger Purchases House/Car)</option>
+      <option value="custom">Cash Savings</option>
+    </select>
+
+    <!-- Loan inputs -->
+    <div id="loanInputs" style="display:none;">
+      <span class="header-metric">
+        <h4>Loan: <input class="input" id="loanInput" type="text" inputmode="numeric" placeholder="Loan amount" /></h4>
+      </span>
+      <span class="header-metric">
+        <h4>Down Payment: <input class="input" id="downPaymentInput" type="text" inputmode="numeric" placeholder="Down payment"/></h4>
+      </span>
+    </div>
+
+    <!-- Custom savings input -->
+    <div id="customSavingsInput" style="display:none;">
+      <span class="header-metric">
+        <h4>Savings Goal: <input class="input" id="customGoalInput" type="text" inputmode="numeric" placeholder="Goal amount" /></h4>
+      </span>
+    </div>
+
+    <!-- Months to goal -->
+    <span class="header-metric">
+      <h3><span class="months-to-goal"></span></h3>
+      <span id="loanHelper" class="help-icon">?</span>
+    </span>
   </div>
+</section>
+
 </section>
 
         <button id="saveGoalBtn">Save</button>
