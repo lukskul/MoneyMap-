@@ -1,4 +1,18 @@
 {
   "holdings": [
+    {
+      "metals": "copper",
+      "weight": 2,
+      "quantity": 1,
+      "buyPrice": 1.01,
+      "design": "american eagle"
+    },
+    {
+      "metals": "silver",
+      "weight": 1,
+      "quantity": 1,
+      "buyPrice": 36,
+      "design": "american eagle"
+    }
   ]
 }

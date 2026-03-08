@@ -224,15 +224,21 @@ document.addEventListener("DOMContentLoaded", async () => {
         body: JSON.stringify(payload)
       });
 
-      if (!res.ok) throw new Error("Save failed");
+    if (!res.ok) throw new Error("Save failed");
 
-      currentSettings = { ...currentSettings, ...payload };
-      return true;
+    currentSettings = { ...currentSettings, ...payload };
+
+    await updateGoalMessage();
+    await updateEmergency();
+
+    return true;
 
     } catch (err) {
       console.error(err);
       return false;
     }
+
+    
   }
 
   /* ================= APPLY MODES ================= */
@@ -345,10 +351,67 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   /* ================= EVENT LISTENERS ================= */
 
-  focusDropdown?.addEventListener("change", async () => {
-    applyFocusMode(focusDropdown.value);
-    await updateAffordability();
-  });
+// focusDropdown?.addEventListener("change", async () => {
+//   const mode = focusDropdown.value;
+
+//   applyFocusMode(mode);
+
+//   if (mode === "savings") {
+//     if (!savingsSubgoal.value) {
+//       savingsSubgoal.value = "custom";
+//     }
+//     applySavingsSubgoal(savingsSubgoal.value);
+//   } else {
+//     applySavingsSubgoal(""); 
+//   }
+
+//   await updateAffordability();
+// });
+
+focusDropdown?.addEventListener("change", async () => {
+  const mode = focusDropdown.value;
+  const income = Number(incomeInput?.value || 0);
+  const expenses = Number(expensesInput?.value || 0);
+
+  // Always apply the focus mode (updates portfolio percentages)
+  applyFocusMode(mode);
+
+  if (mode === "savings") {
+
+    // Check if income is positive and greater than expenses
+    if (income <= 0 || income <= expenses) {
+      alert("You need to enter income greater than expenses before setting a savings goal.");
+
+      // Reset dropdowns and subgoal
+      focusDropdown.value = "";
+      savingsSubgoal.value = "";
+      customGoalInput.value = "";
+      loanInput.value = "";
+      downPaymentInput.value = "";
+
+      // Hide subgoal inputs and affordability section
+      applySavingsSubgoal("");
+      applyFocusMode(""); // hides portfolio and months-to-goal
+
+      await updateAffordability();
+      return;
+    }
+
+    // Set default subgoal if not selected
+    if (!savingsSubgoal.value) {
+      savingsSubgoal.value = "custom";
+    }
+
+    // Show subgoal inputs
+    applySavingsSubgoal(savingsSubgoal.value);
+
+  } else {
+    // Clear subgoal inputs for non-savings modes
+    applySavingsSubgoal("");
+  }
+
+  await updateAffordability();
+});
 
   savingsSubgoal?.addEventListener("change", async () => {
     applySavingsSubgoal(savingsSubgoal.value);
