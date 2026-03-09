@@ -382,6 +382,10 @@ async function saveProfile() {
     input.value = raw ? Number(raw).toLocaleString() : "";
   }
 
+  window.getFocusMode = function () {
+  return focusDropdown.value;
+};
+
   /* ================= EVENT LISTENERS ================= */
 
 focusDropdown?.addEventListener("change", async () => {

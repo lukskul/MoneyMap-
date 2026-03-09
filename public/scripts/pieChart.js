@@ -58,14 +58,17 @@ async function renderIncomeFlowPie() {
       protection: { vaultCash: 30, vaultMetals: 40, banks: 15, investments: 15 }
     };
 
-    const focusMode = profile.focusMode || 'savings';
-    const percentages = focusProfiles[focusMode] || focusProfiles['savings'];
+    const focusMode = window.getFocusMode() || "Savings";
+    const percentages = focusProfiles[focusMode] || focusProfiles['Savings'];
 
-    // Update the title dynamically
     const titleEl = document.querySelector('.portfolio-title');
+
     if (titleEl) {
-      titleEl.textContent = `Portfolio allocation ${focusMode}`;
+      titleEl.textContent =`Portfolio Allocation ${focusMode.charAt(0).toUpperCase() + focusMode.slice(1)}`;
     }
+
+    console.log("Focus Mode:", focusMode);
+    console.log("Percentages:", percentages);
 
     // Calculate allocated amounts
     const flowData = {
