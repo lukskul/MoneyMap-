@@ -65,6 +65,44 @@ app.post('/api/profile', (req, res) => {
 
 
 /* ================= METALS ================= */
+app.get('/api/spot-prices', async (req, res) => {
+  const cache = readJSON(files.spotPrices, {});
+  const ONE_HOUR = 60 * 60 * 1000;
+
+  if (cache.lastUpdated && Date.now() - cache.lastUpdated < ONE_HOUR) {
+    return res.json(cache);
+  }
+
+  try {
+    const headers = {
+      "x-access-token": process.env.GOLD_API_KEY,
+      "Content-Type": "application/json"
+    };
+
+    const gold = await fetch("https://www.goldapi.io/api/XAU/USD", { headers }).then(r => r.json());
+    const silver = await fetch("https://www.goldapi.io/api/XAG/USD", { headers }).then(r => r.json());
+
+    const data = {
+      gold: gold.price || cache.gold || 0,
+      silver: silver.price || cache.silver || 0,
+      copper: cache.copper || 1.99,
+      lastUpdated: Date.now()
+    };
+
+    fs.writeFileSync(files.spotPrices, JSON.stringify(data, null, 2));
+
+    res.json(data);
+
+  } catch (err) {
+
+    if (cache.gold) {
+      return res.json(cache); // fallback
+    }
+
+    res.status(500).send("Failed to fetch spot prices");
+  }
+});
+
 app.get('/api/metals', (req, res) => {
   const metals = readJSON(files.metals, { holdings: [] });
   res.json(metals);
@@ -248,15 +286,6 @@ app.delete('/api/investments/:id', (req, res) => {
   data.investments.splice(index, 1);
 
   writeJSON(files.investments, data, res);
-});
-/* ================= SPOT PRICES ================= */
-app.get('/api/spot-prices', (req, res) => {
-  const prices = readJSON(files.spotPrices, {});
-  res.json(prices);
-});
-
-app.post('/api/spot-prices', (req, res) => {
-  writeJSON(files.spotPrices, req.body, res);
 });
 
 /* ================= START SERVER ================= */

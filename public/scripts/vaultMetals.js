@@ -2,46 +2,8 @@ const API_KEY = "goldapi-pv9smbmkqkxq-io";
 
 /* ================= SPOT PRICES ================= */
 async function fetchSpotPrices() {
-  const headers = {
-    "x-access-token": API_KEY,
-    "Content-Type": "application/json"
-  };
-
-  try {
-    const [goldRes, silverRes] = await Promise.all([
-      fetch("https://www.goldapi.io/api/XAU/USD", { headers }),
-      fetch("https://www.goldapi.io/api/XAG/USD", { headers })
-    ]);
-
-    if (!goldRes.ok || !silverRes.ok) {
-      const status = !goldRes.ok ? goldRes.status : silverRes.status;
-      throw new Error(`GoldAPI response not ok (status ${status})`);
-    }
-
-    const goldData = await goldRes.json();
-    const silverData = await silverRes.json();
-
-    const prices = {
-      gold: goldData.price,
-      silver: silverData.price,
-      copper: 1.99,
-      lastUpdated: new Date().toISOString()
-    };
-
-    localStorage.setItem('spotPrices', JSON.stringify(prices));
-
-    await fetch('/api/spot-prices', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(prices)
-    });
-
-    return prices;
-  } catch {
-    const cached = localStorage.getItem('spotPrices');
-    if (cached) return JSON.parse(cached);
-    return { gold: 0, silver: 0, copper: 1.99, lastUpdated: null };
-  }
+  const res = await fetch('/api/spot-prices');
+  return await res.json();
 }
 
 /* ================= HOLDINGS ================= */
@@ -130,25 +92,51 @@ async function renderMetals(spotPrices, holdings, filterMetals = null) {
 
 /* ================= UPDATE UI ================= */
 async function updateUI() {
-  const spotPrices = await fetchSpotPrices();
+
+  let spotPrices;
+
+try {
+  spotPrices = await fetchSpotPrices();
+
+  if (
+    !spotPrices ||
+    typeof spotPrices.gold !== "number" ||
+    typeof spotPrices.silver !== "number" ||
+    typeof spotPrices.copper !== "number"
+  ) {
+    throw new Error("Invalid API data");
+  }
+
+  localStorage.setItem("spotCache", JSON.stringify(spotPrices));
+
+} catch (err) {
+
+  console.warn("Using cached metal prices");
+
+  const cached = localStorage.getItem("spotCache");
+
+  if (cached) {
+    spotPrices = JSON.parse(cached);
+  } else {
+    spotPrices = { gold: 0, silver: 0, copper: 0 };
+  }
+}
+
   const holdings = await fetchHoldings();
 
-  document.getElementById('goldSpot').textContent = `Gold: $${spotPrices.gold.toFixed(2)}`;
-  document.getElementById('silverSpot').textContent = `Silver: $${spotPrices.silver.toFixed(2)}`;
-  document.getElementById('copperSpot').textContent = `Copper: $${spotPrices.copper.toFixed(2)}`;
+  document.getElementById('goldSpot').textContent =
+    `Gold: $${(spotPrices.gold ?? 0).toFixed(2)}`;
+
+  document.getElementById('silverSpot').textContent =
+    `Silver: $${(spotPrices.silver ?? 0).toFixed(2)}`;
+
+  document.getElementById('copperSpot').textContent =
+    `Copper: $${(spotPrices.copper ?? 0).toFixed(2)}`;
 
   await renderMetals(spotPrices, holdings, currentFilter);
 
-  if (spotPrices.lastUpdated) {
-    const date = new Date(spotPrices.lastUpdated);
-    document.getElementById('lastUpdated').textContent = `Last updated: ${date.toLocaleString()}`;
-  } else {
-    document.getElementById('lastUpdated').textContent = 'Last updated: N/A';
-  }
-
   window.updateTotalAssets && window.updateTotalAssets();
 }
-
 /* ================= FORM & EVENTS ================= */
 document.addEventListener('DOMContentLoaded', () => {
   const metalsInput = document.getElementById('metals');
