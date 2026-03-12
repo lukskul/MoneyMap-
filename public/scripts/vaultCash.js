@@ -78,6 +78,45 @@ async function updateVaultUI() {
   await window.recalculateMonthsToGoal();
 }
 
+let vaultAnimationFrame;
+let currentVaultDisplay = 0;
+
+function animateVaultDisplay(targetValue) {
+
+
+  if (!vaultCashTotal) return;
+
+  if (vaultAnimationFrame) cancelAnimationFrame(vaultAnimationFrame);
+
+  const startValue = currentVaultDisplay;
+  const duration = 900;
+  const startTime = performance.now();
+
+  function easeOutCubic(t) {
+    return 1 - Math.pow(1 - t, 3);
+  }
+
+  function frame(time) {
+
+    const progress = Math.min((time - startTime) / duration, 1);
+    const eased = easeOutCubic(progress);
+
+    const value = Math.round(
+      startValue + (targetValue - startValue) * eased
+    );
+
+    vaultCashTotal.textContent = `$${value.toLocaleString()}`;
+
+    if (progress < 1) {
+      vaultAnimationFrame = requestAnimationFrame(frame);
+    } else {
+      currentVaultDisplay = targetValue;
+    }
+  }
+
+  vaultAnimationFrame = requestAnimationFrame(frame);
+}
+
 /* ================= FORM & EVENTS ================= */
 
 document.addEventListener('DOMContentLoaded', () => {

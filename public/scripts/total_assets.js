@@ -9,6 +9,46 @@ window.registerAssetBucket = function (name, fn) {
 };
 
 // master aggregator
+let totalAssetsAnimationFrame;
+let currentTotalAssetsDisplay = 0;
+
+function animateTotalAssets(targetValue) {
+  const el = document.getElementById("totalAssets");
+  if (!el) return;
+
+  if (totalAssetsAnimationFrame) {
+    cancelAnimationFrame(totalAssetsAnimationFrame);
+  }
+
+  const startValue = currentTotalAssetsDisplay;
+  const duration = 900;
+  const startTime = performance.now();
+
+  function easeOutCubic(t) {
+    return 1 - Math.pow(1 - t, 3);
+  }
+
+  function frame(time) {
+    const progress = Math.min((time - startTime) / duration, 1);
+    const eased = easeOutCubic(progress);
+
+    const value = startValue + (targetValue - startValue) * eased;
+
+    el.textContent = `Total Assets: $${value.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}`;
+
+    if (progress < 1) {
+      totalAssetsAnimationFrame = requestAnimationFrame(frame);
+    } else {
+      currentTotalAssetsDisplay = targetValue;
+    }
+  }
+
+  totalAssetsAnimationFrame = requestAnimationFrame(frame);
+}
+
 window.updateTotalAssets = async function () {
   let grandTotal = 0;
 
@@ -21,13 +61,10 @@ window.updateTotalAssets = async function () {
     }
   }
 
-  const el = document.getElementById('totalAssets');
-  if (el) el.textContent = `Total Assets: $${grandTotal.toFixed(2)}`;
+  animateTotalAssets(grandTotal);
 
   window.checkPortfolioBalance && window.checkPortfolioBalance();
-
   window.updateEmergency && window.updateEmergency();
-
 };
 
 /* ================= EMERGENCY FUND ================= */
@@ -74,10 +111,11 @@ window.calculateEmergencyFund = async function () {
 /* ================= EMERGENCY UI ================= */
 
 window.updateEmergency = async function () {
+
   const data = await window.calculateEmergencyFund();
   if (!data) return;
 
-  const statusEl = document.getElementById('emergencyStatus');
+  const statusEl = document.getElementById("emergencyStatus");
   if (!statusEl) return;
 
   const {
@@ -85,28 +123,51 @@ window.updateEmergency = async function () {
     target,
     vaultTotal,
     monthsCovered,
-    percentFunded
+    percentFunded,
+    monthlyExpenses
   } = data;
 
+  const money = v => `$${Number(v || 0).toLocaleString()}`;
+
+  let message = "";
+  let color = "lightgray";
+
   if (target === 0) {
-    statusEl.textContent = "Set aside at least 1 month expenses! Settings - Emergency Fund.  ";
-    statusEl.style.color = "lightgray";
-    return;
+    message =
+      `Save at least ${money(monthlyExpenses)} (1 month expenses) for an emergency fund.`;
   }
 
-  if (percentFunded >= 100) {
-    statusEl.textContent =
-      `Emergency Funds: ${emergencyMonths} months covered`;
-    statusEl.style.color = "lightgreen";
-  } 
+  else if (percentFunded >= 100) {
+
+    message =
+      `Emergency Fund: ${money(target)} saved. ${emergencyMonths} months covered.`;
+
+    color = "lightgreen";
+  }
+
   else if (vaultTotal === 0) {
-    statusEl.textContent = "Save at least 1 month expenses for an Emergency.";
-    statusEl.style.color = "lightblue";
-  } 
-  else {
-    statusEl.textContent =
-      `Emergency Funds: ${monthsCovered} month covered. Goal: ${percentFunded.toFixed(0)}% Funded`;
-    statusEl.style.color = "orange";
-  }
-};
 
+    message =
+      `Emergency Fund: $0 saved. Goal ${money(target)} (${emergencyMonths} months).`;
+
+    color = "lightblue";
+  }
+
+  else {
+
+    message =
+      `Emergency Fund: ${money(vaultTotal)} saved. ${monthsCovered} month covered. ${percentFunded.toFixed(0)}% of ${money(target)} goal.`;
+
+    color = "orange";
+  }
+
+  statusEl.textContent = message;
+  statusEl.style.color = color;
+
+  /* ---------- UPDATE VAULT DISPLAY ---------- */
+
+  const allocatedEmergency = Math.min(vaultTotal, target);
+  const displayVault = vaultTotal - allocatedEmergency;
+
+  animateVaultDisplay(displayVault);
+};
