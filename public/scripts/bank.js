@@ -65,7 +65,7 @@ function renderBanks(accounts) {
     table.appendChild(row);
   });
 
-  totalLabel.textContent = `(Total: $${total.toFixed(2)})`;
+  totalLabel.textContent = `Total: $${total.toFixed(2)}`;
 
   // Update bucketTotals
   window.bucketTotals = window.bucketTotals || {};

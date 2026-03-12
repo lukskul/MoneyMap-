@@ -15,13 +15,14 @@ async function addVaultEntry(entry) {
 }
 
 /* ================= TOTAL CALC ================= */
-window.getVaultTotal = async function() {
+window.getvaultCashTotal = async function() {
   const vault = await fetch('/api/vault').then(r => r.json());
   return vault.vault?.reduce((sum, e) => sum + e.denomination * e.quantity, 0) || 0;
 };
 
 // Expose for global aggregator
-window.getVaultTotal = getVaultTotal;
+window.getVaultCashTotal = getvaultCashTotal;
+
 
 /* ================= RENDER ================= */
 
@@ -47,14 +48,14 @@ async function renderVault() {
   });
 
 // Update per-bucket total display
-const vaultTotalEl = document.getElementById('vaultTotal');
+const vaultCashTotalEl = document.getElementById('vaultCashTotal');
 
-if (vaultTotalEl) {
-  vaultTotalEl.textContent = `$${totalValue.toLocaleString(undefined, {
+if (vaultCashTotalEl) {
+  vaultCashTotalEl.textContent = `$${totalValue.toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   })}`;
-  vaultTotalEl.dataset.total = totalValue; // store live value
+  vaultCashTotalEl.dataset.total = totalValue; // store live value
 }
 
   // Update bucketTotals for total-assets
@@ -122,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ================= TOTAL ASSETS HOOK ================= */
 
 // Expose vault total for total-assets.js
-window.registerAssetBucket && window.registerAssetBucket('vault', window.getVaultTotal);
+window.registerAssetBucket && window.registerAssetBucket('vault', window.getvaultCashTotal);
 
 
 

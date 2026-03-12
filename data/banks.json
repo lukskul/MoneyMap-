@@ -1,5 +1,10 @@
 {
   "accounts": [
-
+    {
+      "id": "1773284265959",
+      "bank": "SDCCU",
+      "type": "Checking",
+      "amount": 2000
+    }
   ]
 }

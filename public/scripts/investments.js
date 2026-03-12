@@ -65,7 +65,7 @@ function renderInvestments(investments) {
   });
 
   document.getElementById('investmentTotal').textContent =
-    `(Total: $${total.toFixed(2)})`;
+    `Total: $${total.toFixed(2)}`;
 
   // Update bucketTotals for total-assets
   window.bucketTotals = window.bucketTotals || {};

@@ -3,11 +3,11 @@
   "monthlyExpenses": 2000,
   "emergencyMonths": 1,
   "goal": {
-    "type": "savings",
-    "subgoal": "custom",
+    "type": "growth",
+    "subgoal": "",
     "amount": 5000,
     "loanAmount": 0,
     "downPayment": 0
   },
-  "monthsToGoal": 5
+  "monthsToGoal": 0
 }

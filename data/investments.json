@@ -1,5 +1,10 @@
 {
   "investments": [
-    
+    {
+      "id": "1773284868168",
+      "platform": "Robinhood",
+      "asset": "Brokerage",
+      "value": 5000
+    }
   ]
 }

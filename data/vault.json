@@ -1,5 +1,14 @@
 {
   "vault": [
-
+    {
+      "denomination": 20,
+      "quantity": 100,
+      "year": null
+    },
+    {
+      "denomination": 50,
+      "quantity": 200,
+      "year": null
+    }
   ]
 }

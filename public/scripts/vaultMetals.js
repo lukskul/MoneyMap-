@@ -83,7 +83,7 @@ async function renderMetals(spotPrices, holdings, filterMetals = null) {
     });
   });
 
-  document.getElementById('portfolioValue').textContent = `(Total: $${totalValue.toFixed(2)})`;
+  document.getElementById('portfolioValue').textContent = `Total: $${totalValue.toFixed(2)}`;
 
   // Expose bucket total for total-assets.js
   window.bucketTotals = window.bucketTotals || {};
@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Force update holdings and UI
       const updatedHoldings = await fetchHoldings(); // fresh data from server
-      const spotPrices = JSON.parse(localStorage.getItem('spotPrices')) || {};
+      const spotPrices = JSON.parse(localStorage.getItem('spotCache')) || {};
       await renderMetals(spotPrices, updatedHoldings, currentFilter);
 
       // Update total assets
@@ -220,14 +220,22 @@ document.addEventListener('DOMContentLoaded', () => {
 updateUI();
 
 /* ================= TOTAL ASSETS HOOK ================= */
+
 window.getMetalsTotal = async function () {
   const holdings = await fetchHoldings();
-  const spotPrices = JSON.parse(localStorage.getItem('spotPrices')) || {};
-  return holdings.reduce(
-    (sum, item) => sum + item.weight * item.quantity * (spotPrices[item.metals] || 0),
-    0
-  );
-};
+  const spotPrices = JSON.parse(localStorage.getItem("spotCache")) || {};
 
-// Register metals bucket for total-assets.js
-window.registerAssetBucket && window.registerAssetBucket('metals', window.getMetalsTotal);
+//   return holdings.reduce(
+//     (sum, item) =>
+//       sum + item.weight * item.quantity * (spotPrices[item.metals] || 0),
+//     0
+//   );
+// };
+return window.bucketTotals?.metals || 0;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  if (window.registerAssetBucket) {
+    window.registerAssetBucket("metals", window.getMetalsTotal);
+  }
+});
