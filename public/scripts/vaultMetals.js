@@ -83,7 +83,7 @@ async function renderMetals(spotPrices, holdings, filterMetals = null) {
     });
   });
 
-  document.getElementById('portfolioValue').textContent = `Total: $${totalValue.toFixed(2)}`;
+  document.getElementById('portfolioValue').textContent = `$${totalValue.toFixed(2)}`;
 
   // Expose bucket total for total-assets.js
   window.bucketTotals = window.bucketTotals || {};

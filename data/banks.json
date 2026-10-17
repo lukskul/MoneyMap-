@@ -1,10 +1,16 @@
 {
   "accounts": [
     {
-      "id": "1773284265959",
-      "bank": "SDCCU",
+      "id": "1773373630011",
+      "bank": "chase",
       "type": "Checking",
-      "amount": 2000
+      "amount": 321
+    },
+    {
+      "id": "1773373666775",
+      "bank": "chase",
+      "type": "Savings",
+      "amount": 7000
     }
   ]
 }
