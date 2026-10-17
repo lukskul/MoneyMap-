@@ -1,7 +1,6 @@
 # MoneyMap-
 
-**Metal Wallet** is a desktop application built with Electron that allows users to manage their precious metal investments. You can track gold, silver, and copper holdings, view current spot prices, and calculate gains/losses — all from a clean, retractable UI.
-+++ Added features for money map.
+**MoneyMap-** is a desktop application built with Electron that allows users to manage their home savings. This app assumes you have a vault and have begun your journy out of the banks.  Use this app to track all the valuable things you want to put in your at home safe.  Precious Metals, Cash Collectables and even track your banks and 401k. Keep track or investments and calculate gains/losses — all from a clean, retractable UI.
 
 ## 🚀 Features
 
@@ -11,6 +10,9 @@
 - Clean UI with collapsible input form
 - Offline fallback using local and server-cached spot prices
 - Standalone desktop app (built with Electron)
+- Set Savings goals for loan downpayments
+- Set asside emergency funds
+- Link other investments to monitor your overall net worth
 
 ## 🖥️ Installation
 
