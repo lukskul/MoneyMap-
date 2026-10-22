@@ -1,6 +1,6 @@
 # MoneyMap-
 
-**MoneyMap-** is a desktop application built with Electron that allows users to manage their home savings. This app assumes you have a vault and have begun your journy out of the banks.  Use this app to track all the valuable things you want to put in your at home safe.  Precious Metals, Cash Collectables and even track your banks and 401k. Keep track or investments and calculate gains/losses — all from a clean, retractable UI.
+**MoneyMap-** is a desktop application built with Electron that allows users to manage their home savings. This app assumes you have a home safe and are starting your savings adventure or your advanced and have multiple bank accounts and wide spread assets that you want to keep track of in one place. Precious Metals, Cash, Cash Collectables, Banks and 401k, IRA, Crypto. Ccalculate gains/losses, Savings Goals, Allocate income into 3 optimal strategies — all from a clean, retractable UI.
 
 ## 🚀 Features
 
@@ -9,10 +9,11 @@
 - Auto-calculate total portfolio value and gain/loss
 - Clean UI with collapsible input form
 - Offline fallback using local and server-cached spot prices
+- Choose a savings strategy
 - Standalone desktop app (built with Electron)
 - Set Savings goals for loan downpayments
 - Set asside emergency funds
-- Link other investments to monitor your overall net worth
+- Include other investments to monitor your overall net worth
 
 ## 🖥️ Installation
 

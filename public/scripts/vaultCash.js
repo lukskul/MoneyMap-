@@ -1,27 +1,46 @@
+
 /* ================= VAULT DATA ================= */
+window.getVaultTotal = window.getvaultCashTotal;
 
 async function fetchVault() {
-  const res = await fetch('/api/vault');
+  const res = await fetch('/api/vault', {
+    credentials: 'include'
+  });
+
+  if (!res.ok) {
+    throw new Error(`Could not load vault data (${res.status}).`);
+  }
+
   const data = await res.json();
   return data.vault || [];
 }
 
 async function addVaultEntry(entry) {
-  await fetch('/api/vault', {
+  const res = await fetch('/api/vault', {
     method: 'POST',
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(entry)
   });
+
+  if (!res.ok) {
+    const message = await res.text();
+    throw new Error(message || `Could not save vault entry (${res.status}).`);
+  }
 }
 
 /* ================= TOTAL CALC ================= */
-window.getvaultCashTotal = async function() {
-  const vault = await fetch('/api/vault').then(r => r.json());
-  return vault.vault?.reduce((sum, e) => sum + e.denomination * e.quantity, 0) || 0;
+
+window.getvaultCashTotal = async function () {
+  const vault = await fetchVault();
+
+  return vault.reduce(
+    (sum, entry) => sum + Number(entry.denomination) * Number(entry.quantity),
+    0
+  );
 };
 
-// Expose for global aggregator
-window.getVaultCashTotal = getvaultCashTotal;
+window.getVaultCashTotal = window.getvaultCashTotal;
 
 
 /* ================= RENDER ================= */
@@ -82,11 +101,13 @@ let vaultAnimationFrame;
 let currentVaultDisplay = 0;
 
 function animateVaultDisplay(targetValue) {
-
+  const vaultCashTotal = document.getElementById('vaultCashTotal');
 
   if (!vaultCashTotal) return;
 
-  if (vaultAnimationFrame) cancelAnimationFrame(vaultAnimationFrame);
+  if (vaultAnimationFrame) {
+    cancelAnimationFrame(vaultAnimationFrame);
+  }
 
   const startValue = currentVaultDisplay;
   const duration = 900;
@@ -96,6 +117,25 @@ function animateVaultDisplay(targetValue) {
     return 1 - Math.pow(1 - t, 3);
   }
 
+  function frame(time) {
+    const progress = Math.min((time - startTime) / duration, 1);
+    const eased = easeOutCubic(progress);
+
+    const value = Math.round(
+      startValue + (targetValue - startValue) * eased
+    );
+
+    vaultCashTotal.textContent = `$${value.toLocaleString()}`;
+
+    if (progress < 1) {
+      vaultAnimationFrame = requestAnimationFrame(frame);
+    } else {
+      currentVaultDisplay = targetValue;
+    }
+  }
+
+  vaultAnimationFrame = requestAnimationFrame(frame);
+}
   function frame(time) {
 
     const progress = Math.min((time - startTime) / duration, 1);
@@ -115,7 +155,7 @@ function animateVaultDisplay(targetValue) {
   }
 
   vaultAnimationFrame = requestAnimationFrame(frame);
-}
+
 
 /* ================= FORM & EVENTS ================= */
 
@@ -156,13 +196,17 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   validate();
-  updateVaultUI();
 });
+
+
 
 /* ================= TOTAL ASSETS HOOK ================= */
 
 // Expose vault total for total-assets.js
 window.registerAssetBucket && window.registerAssetBucket('vault', window.getvaultCashTotal);
 
+window.refreshVault = async function () {
+  await updateVaultUI();
+};
 
-
+window.animateVaultDisplay = animateVaultDisplay;

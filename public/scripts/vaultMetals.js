@@ -137,6 +137,10 @@ try {
 
   window.updateTotalAssets && window.updateTotalAssets();
 }
+
+// Allow the login flow to refresh metals after authentication.
+window.refreshMetals = updateUI;
+
 /* ================= FORM & EVENTS ================= */
 document.addEventListener('DOMContentLoaded', () => {
   const metalsInput = document.getElementById('metals');
@@ -217,7 +221,6 @@ document.addEventListener('DOMContentLoaded', () => {
   validateForm();
 });
 
-updateUI();
 
 /* ================= TOTAL ASSETS HOOK ================= */
 

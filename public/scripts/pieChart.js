@@ -1,11 +1,20 @@
-let pieChart;
+
+/* ================= PORTFOLIO PIE CHART ================= */
+
+const portfolioPieCharts = {};
 
 function createPortfolioPie(chartId, data) {
-  const ctx = document.getElementById(chartId).getContext('2d');
+  const canvas = document.getElementById(chartId);
+  if (!canvas) {
+    console.warn(`Pie chart canvas not found: ${chartId}`);
+    return;
+  }
 
-  if (pieChart) pieChart.destroy();
+  if (portfolioPieCharts[chartId]) {
+    portfolioPieCharts[chartId].destroy();
+  }
 
-  pieChart = new Chart(ctx, {
+  portfolioPieCharts[chartId] = new Chart(canvas.getContext('2d'), {
     type: 'pie',
     data: {
       labels: Object.keys(data),
@@ -23,81 +32,144 @@ function createPortfolioPie(chartId, data) {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: true,
       plugins: {
         legend: {
           position: 'right',
-          labels: { color: '#fff', font: { size: 14 }, usePointStyle: true, padding: 20 }
+          labels: {
+            color: '#fff',
+            font: { size: 14 },
+            usePointStyle: true,
+            padding: 20
+          }
         },
         tooltip: {
           enabled: true,
           backgroundColor: 'rgba(0,0,0,0.7)',
           titleColor: '#fff',
-          bodyColor: '#fff'
+          bodyColor: '#fff',
+          callbacks: {
+            label(context) {
+              const value = Number(context.raw) || 0;
+              return `${context.label}: $${value.toLocaleString(
+                undefined,
+                { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+              )}`;
+            }
+          }
         }
       }
     }
   });
 }
 
+/* ================= INCOME FLOW PIE ================= */
+
 async function renderIncomeFlowPie() {
   try {
-    const res = await fetch('/api/profile');
-    if (!res.ok) return;
+    const res = await fetch('/api/profile', {
+      credentials: 'include'
+    });
+
+    if (res.status === 401) {
+      throw new Error('Your session has expired. Please log in again.');
+    }
+
+    if (!res.ok) {
+      throw new Error(`Could not load profile (${res.status})`);
+    }
 
     const profile = await res.json();
-    const monthlyIncome = Number(profile.monthlyIncome || 0);
-    const monthlyExpenses = Number(profile.monthlyExpenses || 0);
+
+    const monthlyIncome = Number(profile.monthlyIncome) || 0;
+    const monthlyExpenses = Number(profile.monthlyExpenses) || 0;
     const netIncome = monthlyIncome - monthlyExpenses;
 
-    if (netIncome <= 0) return;
-
-    // Focus mode percentages
     const focusProfiles = {
-      growth: { vaultCash: 10, vaultMetals: 15, banks: 15, investments: 60 },
-      savings: { vaultCash: 50, vaultMetals: 10, banks: 25, investments: 15 },
-      protection: { vaultCash: 30, vaultMetals: 40, banks: 15, investments: 15 }
+      growth: {
+        vaultCash: 10,
+        vaultMetals: 15,
+        banks: 15,
+        investments: 60
+      },
+      savings: {
+        vaultCash: 50,
+        vaultMetals: 10,
+        banks: 25,
+        investments: 15
+      },
+      protection: {
+        vaultCash: 30,
+        vaultMetals: 40,
+        banks: 15,
+        investments: 15
+      }
     };
 
-    const focusMode = window.getFocusMode() || "Savings";
-    const percentages = focusProfiles[focusMode] || focusProfiles['Savings'];
+    // Normalize "Savings", "SAVINGS", etc. to the expected lowercase key.
+    const rawFocusMode = window.getFocusMode?.() || 'savings';
+    const focusMode = String(rawFocusMode).trim().toLowerCase();
+    const percentages = focusProfiles[focusMode] || focusProfiles.savings;
 
     const titleEl = document.querySelector('.portfolio-title');
 
     if (titleEl) {
-      titleEl.textContent =`Portfolio Allocation ${focusMode.charAt(0).toUpperCase() + focusMode.slice(1)}`;
+      const displayMode =
+        focusMode.charAt(0).toUpperCase() + focusMode.slice(1);
+
+      titleEl.textContent = `Portfolio Allocation ${displayMode}`;
     }
 
-    console.log("Focus Mode:", focusMode);
-    console.log("Percentages:", percentages);
+    if (netIncome <= 0) {
+      // Don't leave an outdated allocation visible.
+      if (portfolioPieCharts.portfolioPieChart) {
+        portfolioPieCharts.portfolioPieChart.destroy();
+        delete portfolioPieCharts.portfolioPieChart;
+      }
 
-    // Calculate allocated amounts
+      console.info('Portfolio allocation unavailable: net monthly income is not positive.');
+      return;
+    }
+
     const flowData = {
-      'Vault Cash': (percentages.vaultCash / 100) * netIncome,
-      'Vault Metals': (percentages.vaultMetals / 100) * netIncome,
-      'Banks': (percentages.banks / 100) * netIncome,
-      'Investments': (percentages.investments / 100) * netIncome
+      'Vault Cash': percentages.vaultCash / 100 * netIncome,
+      'Vault Metals': percentages.vaultMetals / 100 * netIncome,
+      'Banks': percentages.banks / 100 * netIncome,
+      'Investments': percentages.investments / 100 * netIncome
     };
 
     createPortfolioPie('portfolioPieChart', flowData);
 
   } catch (err) {
-    console.error("Failed to render income flow pie chart:", err);
+    console.error('Failed to render income flow pie chart:', err);
   }
 }
 
-// Refresh pie whenever portfolio overlay opens
-const portfolioOverlay = document.getElementById('portfolioOverlay');
-const portfolioToggleBtn = document.getElementById('portfolioToggleBtn');
-const closePortfolioBtn = document.getElementById('closePortfolioBtn');
+/* ================= PORTFOLIO OVERLAY ================= */
 
-portfolioToggleBtn.addEventListener('click', async () => {
-  portfolioOverlay.classList.add('open');
-  await renderIncomeFlowPie();
-});
+function setupPortfolioOverlay() {
+  const portfolioOverlay = document.getElementById('portfolioOverlay');
+  const portfolioToggleBtn = document.getElementById('portfolioToggleBtn');
+  const closePortfolioBtn = document.getElementById('closePortfolioBtn');
 
-closePortfolioBtn.addEventListener('click', () => {
-  portfolioOverlay.classList.remove('open');
-});
+  portfolioToggleBtn?.addEventListener('click', async () => {
+    portfolioOverlay?.classList.add('open');
+    await renderIncomeFlowPie();
+  });
 
-// Optional: refresh when profile changes
+  closePortfolioBtn?.addEventListener('click', () => {
+    portfolioOverlay?.classList.remove('open');
+  });
+}
+
+// Supports scripts loaded either before or after DOMContentLoaded.
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupPortfolioOverlay);
+} else {
+  setupPortfolioOverlay();
+}
+
+/* ================= GLOBAL REFRESH HOOK ================= */
+
+// Can be called after profile settings change.
 window.updatePortfolioPie = renderIncomeFlowPie;

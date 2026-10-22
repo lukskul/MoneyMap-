@@ -551,6 +551,6 @@ focusDropdown?.addEventListener("change", async () => {
 
   /* ================= INIT ================= */
 
-  await loadProfile();
+  window.refreshFocusMode = loadProfile;  
 
 });

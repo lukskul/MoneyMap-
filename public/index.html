@@ -1,30 +1,75 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
   <title>Money Map</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <main class="app-shell">
+    <!-- Authentication: IDs must match app.js -->
+    <section id="auth-screen" class="auth-layout">
+      <div class="brand-panel">
+        <div class="brand-mark">M</div>
+        <p class="eyebrow">YOUR MONEY, IN ONE PLACE</p>
+        <h1>Find your<br><span>financial direction.</span></h1>
+        <p class="brand-copy">A private space to track what you own, what you owe, and where you want to go.</p>
+        <div class="mini-stat"><span class="mini-dot"></span><span>Your data stays tied to your account.</span></div>
+      </div>
+      <div class="auth-panel">
+        <div class="auth-card">
+          <p class="eyebrow" id="auth-eyebrow">WELCOME BACK</p>
+          <h2 id="auth-title">Sign in to Money Map</h2>
+          <p class="muted" id="auth-description">Pick up where you left off.</p>
+          <form id="auth-form">
+            <label for="username">Username</label>
+            <input id="username" name="username" autocomplete="username" minlength="3" maxlength="32" required>
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" autocomplete="current-password" required>
+            <p id="password-help" class="field-help hidden">Use at least 12 characters for a new password.</p>
+            <button class="primary-button full-width" id="auth-submit" type="submit">Sign in</button>
+          </form>
+          <p id="auth-message" class="status-message" role="status" aria-live="polite"></p>
+          <p class="auth-switch"><span id="auth-switch-copy">New to Money Map?</span> <button id="auth-switch" class="text-button" type="button">Create an account</button></p>
+        </div>
+        <p class="fine-print">Use this on your trusted device. Never share your password.</p>
+      </div>
+    </section>
 
-  <!-- ================= Top Header ================= -->
-<div class="top-header">
-  <div class="header-left">
-    <h1>Money Map</h1>
-    <span id="totalAssets">(Total: $0.00)</span>
-    <p class="months-to-goal"></p>
-  </div>
+    <!-- Green dashboard -->
+    <section id="dashboard-screen" class="dashboard hidden">
+      <aside class="sidebar">
+        <a class="brand-inline" href="#overview" aria-label="Money Map home"><span class="brand-mark small">M</span><span>money<span class="brand-light">map</span></span></a>
+        <span id="totalAssets">(Total: $0.00)</span>
 
-  <div class="header-right">
-    <button id="settingsToggleBtn" class="settings-btn">⚙️</button>
-    <button id="portfolioToggleBtn" class="portfolio-btn">🍰</button>    
-    <button id="reloadBtn" class="settings-btn">🔁</button>
+        <div class="side-label">WORKSPACE</div>
+        <nav id="main-nav" class="main-nav" aria-label="Main navigation">
+          <button id="portfolioToggleBtn" class="portfolio-btn">Savings Distribution 🍰</button>    
+          <button id="settingsToggleBtn" class="settings-btn">Settings ⚙</button>
+          <button id="refresh-button" class="secondary-button" type="button">↻ Refresh data</button>
+        </nav>
+        <div class="sidebar-bottom">
+          <div class="privacy-note"><span class="privacy-icon">◈</span><div><strong>Private workspace</strong><p>Signed-in account only</p></div></div>
+          <button id="logout-button" class="logout-button" type="button">↪ &nbsp; Sign out</button>
+        </div>
+      </aside>
 
-  </div>
-</div>
+      <div class="main-area">
+        <header class="topbar">
+          <div class="top-header">
+            <div class="header-left">
+              <h1>Money Map</h1> 
+            </div>
+            <div class="header-right">
+              <div class="user-chip"><span class="avatar" id="user-avatar">U</span><div><strong id="user-name">User</strong><span>Personal workspace</span></div></div>
+            </div>
+          </div>
+          
+        </header>
 
-<!-- ====== SAVINGS PIE CHART ======= -->
+        <!-- ====== SAVINGS PIE CHART ======= -->
 <div id="portfolioOverlay" class="overlay">
   <div class="overlay-content">
 
@@ -82,7 +127,7 @@
       </select>
 
       <!-- Loan inputs -->
-      <div id="loanInputs" style="display:none;"><span id="loanHelper" class="help-icon">?</span>
+      <div id="loanInputs" style="display:none;"><span id="loanHelper" class="help-icon"></span>
         <span class="header-metric">
           <h4>Loan: <input class="input" id="loanInput" type="text" inputmode="numeric" placeholder="Loan amount" /></h4>
         </span>
@@ -110,204 +155,272 @@
   </div>
 </div>
 
-<!-- ================= VAULT ================= -->
-  <section class="bucket">
-    <h1>🔒 Vault  <span id=vault-assets></span></h1>
-    <div class="vault">
-      <h3><span id="vaultPercent">0%</span>  💵 Cash 
-        <span id="vaultCashTotal"> $0.00</span>
-      </h3>
-      <p><span id="emergencyStatus" class="status-indicator"></span></p>
-      <div class="margin-left">
-        <button id="toggleVaultBtn" class="toggle-btn">ADD CASH</button>
-        <div id="vaultFormWrapper" class="form-wrapper">
-          <form id="vaultForm">
+        <div id="global-message" class="global-message hidden" role="status" aria-live="polite"></div>
 
-            <label>Bill</label>
-            <select id="bill">
-              <option value="">Select</option>
-              <option value="1">$1</option>
-              <option value="2">$2</option>
-              <option value="5">$5</option>
-              <option value="10">$10</option>
-              <option value="20">$20</option>
-              <option value="50">$50</option>
-              <option value="100">$100</option>
-            </select>
+        <section id="view-overview" class="view-section">
+          <div class="welcome-row"><div><h2>Good to see you.</h2><p class="months-to-goal"></p></div></div>
 
-            <label>Year</label>
-            <input type="number" id="year" placeholder="Optional (e.g. 2017)">
+          <div class="metric-grid">
+            <article class="metric-card featured"><div class="metric-top"><span>Monthly income</span><span class="metric-symbol">↗</span></div><div class="metric-value" id="metric-income">$0.00</div><p>Based on your profile</p></article>
+            <article class="metric-card"><div class="metric-top"><span>Monthly expenses</span><span class="metric-symbol">↘</span></div><div class="metric-value" id="metric-expenses">$0.00</div><p>Based on your profile</p></article>
+            <article class="metric-card"><div class="metric-top"><span>Monthly difference</span><span class="metric-symbol">±</span></div><div class="metric-value" id="metric-difference">$0.00</div><p>Income minus expenses</p></article>
+            <article class="metric-card"><div class="metric-top"><span>Emergency fund target</span><span class="metric-symbol">✳</span></div><div class="metric-value" id="metric-emergency">$0.00</div><p id="emergency-subtitle">Target based on monthly expenses</p></article>
+          </div>
+          <div>
+            <article class="panel"><div class="panel-heading"><div><p class="eyebrow">QUICK ACCESS</p><h3>Your accounts</h3></div></div>
+              <div class="quick-links">
 
-            <label>Quantity</label>
-            <input type="number" id="cashQuantity" min="1">
+              <!-- ================= VAULT ================= -->
+              <section class="bucket">
+                <h1>🔒 Vault  <span id=vault-assets></span></h1>
+                <div class="vault">
+                  <h3><span id="vaultPercent">0%</span>  💵 Cash 
+                    <span id="vaultCashTotal"> $0.00</span>
+                  </h3>
+                  <p><span id="emergencyStatus" class="status-indicator"></span></p>
+                  <div class="margin-left">
+                    <button id="toggleVaultBtn" class="primary-button">ADD CASH</button>
+                    <div id="vaultFormWrapper" class="form-wrapper">
+                      <form id="vaultForm">
 
-            <button type="submit" id="vaultSubmit" disabled>Add Cash</button>
-          </form>
-        </div>
-        <details class="collapsible-section"> <summary>🔐 View Holdings</summary>
-          <table>
-            <thead>
-              <tr>
-                <th>Bill</th>
-                <th>Year</th>
-                <th>Quantity</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody id="vaultTable"></tbody>
-          </table>
-        </details>
-      </div>
-    
-      <h3><span id="metalsPercent">0%</span>  🪙 Metals <span id="portfolioValue">$0.00</span></h3>
-      <div class="margin-left">
-        <div id="spotPrices">
-          <span id="goldSpot">Gold: loading...</span> | 
-          <span id="silverSpot">Silver: loading...</span> |
-          <span id="copperSpot">Copper: loading...</span>
-          <div id="lastUpdated" style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;"></div>
-        </div>
-      
-        <button id="toggleFormBtn">NEW COIN</button>
-        <div id="formWrapper" class="form-wrapper">
-          <form id="entryForm">
-            <div class="inline-group">
-              <label for="metals">Metal:</label>
-              <select id="metals">
-                <option></option>
-                <option value="silver">Silver</option>
-                <option value="gold">Gold</option>
-                <option value="copper">Copper</option>
-              </select>
-        
-              <label for="weightSelect">Weight:</label>
-              <select id="weightSelect">
-                <option value="0.1">1/10 oz</option>
-                <option value="0.25">1/4 oz</option>
-                <option value="0.33">1/3 oz</option>
-                <option value="0.5">1/2 oz</option>
-                <option value="1" selected>1 oz</option>
-                <option value="2">2 oz</option>
-              </select>
+                        <label>Bill</label>
+                        <select id="bill">
+                          <option value="">Select</option>
+                          <option value="1">$1</option>
+                          <option value="2">$2</option>
+                          <option value="5">$5</option>
+                          <option value="10">$10</option>
+                          <option value="20">$20</option>
+                          <option value="50">$50</option>
+                          <option value="100">$100</option>
+                        </select>
+
+                        <label>Year</label>
+                        <input type="number" id="year" placeholder="Optional (e.g. 2017)">
+
+                        <label>Quantity</label>
+                        <input type="number" id="cashQuantity" min="1">
+
+                        <button type="submit" id="vaultSubmit" class="toggle-btn" disabled>Add Cash</button>
+                      </form>
+                    </div>
+                    <details class="collapsible-section"> <summary>🔐 View Holdings</summary>
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Bill</th>
+                            <th>Year</th>
+                            <th>Quantity</th>
+                            <th>Total</th>
+                          </tr>
+                        </thead>
+                        <tbody id="vaultTable"></tbody>
+                      </table>
+                    </details>
+                  </div>
+                
+                  <h3><span id="metalsPercent">0%</span>  🪙 Metals <span id="portfolioValue">$0.00</span></h3>
+                  <div class="margin-left">
+                    <div id="spotPrices">
+                      <span id="goldSpot">Gold: loading...</span> | 
+                      <span id="silverSpot">Silver: loading...</span> |
+                      <span id="copperSpot">Copper: loading...</span>
+                      <div id="lastUpdated" style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;"></div>
+                    </div>
+                  
+                    <button id="toggleFormBtn" class="primary-button" >NEW COIN</button>
+                    <div id="formWrapper" class="form-wrapper">
+                      <form id="entryForm">
+                        <div class="inline-group">
+                          <label for="metals">Metal:</label>
+                          <select id="metals">
+                            <option></option>
+                            <option value="silver">Silver</option>
+                            <option value="gold">Gold</option>
+                            <option value="copper">Copper</option>
+                          </select>
+                    
+                          <label for="weightSelect">Weight:</label>
+                          <select id="weightSelect">
+                            <option value="0.1">1/10 oz</option>
+                            <option value="0.25">1/4 oz</option>
+                            <option value="0.33">1/3 oz</option>
+                            <option value="0.5">1/2 oz</option>
+                            <option value="1" selected>1 oz</option>
+                            <option value="2">2 oz</option>
+                          </select>
+                        </div>
+                      
+                        <div class="inline-group">
+                          <label for="design">Design:</label>
+                          <input type="text" id="design" list="designs">
+                          <datalist id="designs"></datalist>
+                    
+                          <label for="quantity">Quantity:</label>
+                          <input type="number" id="metalsQuantity" min="1" value="1" required>
+                        
+                          <label for="buyPrice">Cost:</label>
+                          <input type="number" id="buyPrice" step="0.01" min="0" required>
+                        </div>
+                    
+                        <button id="submitBtn" type="submit" disabled>Add to Wallet</button>
+                      </form>
+                    </div>
+                    <details class="collapsible-section"><summary>🔐 View Holdings</summary>
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Metal</th>
+                            <th>Design</th>
+                            <th>oz.</th>
+                            <th>Buy $$</th>
+                            <th>Spot $$</th>
+                            <th>Profit</th>
+                            <th>Total</th>
+                          </tr>
+                        </thead>
+                        <tbody id="metalsTable"></tbody>
+                      </table>
+                    </details>
+                  </div>
+              </div>
+            </section>
+
+            <!-- ================= BANKS ================= -->
+            <section class="bucket">
+              <h2>🏦 Banks</h2>
+              <h3><span id="banksPercent">0%</span>  💰Savings
+                <span id="banksTotal"></span>
+              </h3>
+              <div class="margin-left">
+                <button id="toggleBankBtn">➕ Add Account</button>
+
+                <div id="bankFormWrapper" class="form-wrapper">
+                  <form id="bankForm">
+                    <input id="bankName" placeholder="Bank / Branch" />
+
+                    <select id="accountType">
+                      <option value="">Account Type</option>
+                      <option value="Checking">Checking</option>
+                      <option value="Savings">Savings</option>
+                    </select>
+
+                    <input id="amount" type="number" step="0.01" placeholder="Amount" />
+
+                    <button id="bankSubmit" type="submit" disabled>Add</button>
+                  </form>
+                </div>
+                <details class="collapsible-section" open><summary>🔐 View Holdings</summary>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Bank</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody id="banksTable"></tbody>
+                  </table>
+                </details>
+              </div>
+            </section>
+
+            <!-- ================= INVESTMENTS ================= -->
+              <section class="bucket">
+                <h2>🚀 Investments</h2>
+                <h3><span id="investmentPercent">0%</span>  📈
+                  <span id="investmentTotal">(Total: $0.00)</span>
+                </h3>
+                <div class="margin-left">
+                  <button id="toggleInvestmentBtn" class="toggle-btn">➕ Add Investment</button>
+
+                  <div id="investmentFormWrapper" class="form-wrapper">
+                    <form id="investmentForm">
+                      <input id="platform" placeholder="Platform / Branch" required />
+
+                      <select id="investmentType" required>
+                        <option value="">Investment Type</option>
+                        <option value="Roth IRA">Roth IRA</option>
+                        <option value="Traditional IRA">Traditional IRA</option>
+                        <option value="Money Market">Money Market</option>
+                        <option value="Brokerage">Brokerage</option>
+                        <option value="Crypto">Crypto</option>
+                        <option value="Other">Other</option>
+                      </select>
+
+                      <input id="investmentAmount" type="number" step="0.01" placeholder="Amount" required />
+
+                      <button id="investmentSubmit" type="submit" disabled>Add</button>
+                    </form>
+                  </div>
+                  <details class="collapsible-section" open><summary>🔐 View Holdings</summary>
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Platform</th>
+                          <th>Type</th>
+                          <th>Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody id="investmentTable"></tbody>
+                    </table>
+                  </details>
+                </div>
+              </section>
+
+              </div>
+            </article>
+          </div>
+          <article class="panel prices-panel"><div class="panel-heading"><div><p class="eyebrow">MARKET SNAPSHOT</p><h3>Spot prices</h3></div><span class="muted small-text" id="prices-updated">Prices load from your server</span></div>
+            <div class="price-grid"><div><span class="price-metal">Gold</span><strong id="price-gold">—</strong><small>per troy ounce</small></div><div><span class="price-metal">Silver</span><strong id="price-silver">—</strong><small>per troy ounce</small></div><div><span class="price-metal">Copper</span><strong id="price-copper">—</strong><small>server-provided unit</small></div></div>
+          </article> 
+        </section>
+
+        <section id="view-metals" class="view-section hidden"><div class="section-intro"><div><h2>Metals</h2><p class="muted">Track your precious-metal holdings.</p></div><button class="primary-button" type="button" data-open-editor="metals">＋ Add holding</button></div><div id="metals-content"></div></section>
+        <section id="view-vault" class="view-section hidden"><div class="section-intro"><div><h2>Vault</h2><p class="muted">Keep track of items stored in your vault.</p></div><button class="primary-button" type="button" data-open-editor="vault">＋ Add item</button></div><div id="vault-content"></div></section>
+        <section id="view-banks" class="view-section hidden"><div class="section-intro"><div><h2>Bank accounts</h2><p class="muted">Keep your cash accounts organized.</p></div><button class="primary-button" type="button" data-open-editor="banks">＋ Add account</button></div><div id="banks-content"></div></section>
+        <section id="view-investments" class="view-section hidden"><div class="section-intro"><div><h2>Investments</h2><p class="muted">Review your investment positions.</p></div><button class="primary-button" type="button" data-open-editor="investments">＋ Add investment</button></div><div id="investments-content"></div></section>
+
+        <section id="view-profile" class="view-section hidden">
+          <div class="section-intro"><div><h2>Goals &amp; profile</h2><p class="muted">Your financial plan starts with the numbers that matter to you.</p></div></div>
+          <form id="profile-form" class="panel profile-form">
+            <div class="form-section-title"><span class="section-number">01</span><div><h3>Monthly budget</h3><p class="muted">Your monthly income and expenses.</p></div></div>
+            <div class="form-grid">
+              <div class="field"><label for="monthlyIncome">Monthly income ($)</label><input id="monthlyIncome" name="monthlyIncome" type="number" min="0" step="0.01" value="0"></div>
+              <div class="field"><label for="monthlyExpenses">Monthly expenses ($)</label><input id="monthlyExpenses" name="monthlyExpenses" type="number" min="0" step="0.01" value="0"></div>
+              <div class="field"><label for="emergencyMonths">Emergency fund (months)</label><input id="emergencyMonths" name="emergencyMonths" type="number" min="0" max="60" step="1" value="6"></div>
             </div>
-          
-            <div class="inline-group">
-              <label for="design">Design:</label>
-              <input type="text" id="design" list="designs">
-              <datalist id="designs"></datalist>
-        
-              <label for="quantity">Quantity:</label>
-              <input type="number" id="metalsQuantity" min="1" value="1" required>
-            
-              <label for="buyPrice">Cost:</label>
-              <input type="number" id="buyPrice" step="0.01" min="0" required>
+            <div class="form-section-title"><span class="section-number">02</span><div><h3>Your goals</h3><p class="muted">Set a direction and track the target.</p></div></div>
+            <div class="form-grid">
+              <div class="field"><label for="focusMode">Financial focus</label><input id="focusMode" name="focusMode" placeholder="e.g. Build savings"></div>
+              <div class="field"><label for="savingsSubgoal">Savings subgoal</label><input id="savingsSubgoal" name="savingsSubgoal" placeholder="e.g. 3-month safety net"></div>
+              <div class="field"><label for="loanAmount">Loan amount ($)</label><input id="loanAmount" name="loanAmount" type="number" min="0" step="0.01" value="0"></div>
+              <div class="field"><label for="downPayment">Down payment ($)</label><input id="downPayment" name="downPayment" type="number" min="0" step="0.01" value="0"></div>
+              <div class="field"><label for="monthsToGoal">Months to goal</label><input id="monthsToGoal" name="monthsToGoal" type="number" min="0" step="1" value="0"></div>
             </div>
-        
-            <button id="submitBtn" type="submit" disabled>Add to Wallet</button>
+            <div class="form-actions"><p id="profile-message" class="status-message" role="status" aria-live="polite"></p><button type="submit" class="primary-button">Save profile</button></div>
           </form>
-        </div>
-        <details class="collapsible-section"><summary>🔐 View Holdings</summary>
-          <table>
-            <thead>
-              <tr>
-                <th>Metal</th>
-                <th>Design</th>
-                <th>oz.</th>
-                <th>Buy $$</th>
-                <th>Spot $$</th>
-                <th>Profit</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody id="metalsTable"></tbody>
-          </table>
-        </details>
+        </section>
+        <footer class="app-footer"><span>Money Map</span><span>Private by account · Keep your password safe</span></footer>
       </div>
-  </div>
-</section>
+    </section>
 
-<!-- ================= BANKS ================= -->
-<section class="bucket">
-  <h2>🏦 Banks</h2>
-  <h3><span id="banksPercent">0%</span>  💰Savings
-    <span id="banksTotal"></span>
-  </h3>
-  <div class="margin-left">
-    <button id="toggleBankBtn">➕ Add Account</button>
-
-    <div id="bankFormWrapper" class="form-wrapper">
-      <form id="bankForm">
-        <input id="bankName" placeholder="Bank / Branch" />
-
-        <select id="accountType">
-          <option value="">Account Type</option>
-          <option value="Checking">Checking</option>
-          <option value="Savings">Savings</option>
-        </select>
-
-        <input id="amount" type="number" step="0.01" placeholder="Amount" />
-
-        <button id="bankSubmit" type="submit" disabled>Add</button>
+    <dialog id="record-dialog" class="record-dialog">
+      <form id="record-form" method="dialog">
+        <div class="dialog-heading"><div><p class="eyebrow">YOUR DATA</p><h2 id="record-dialog-title">Add record</h2></div><button type="button" id="dialog-close" class="icon-button" aria-label="Close">×</button></div>
+        <p class="muted dialog-help">Enter the record as JSON to match the data structure used by your server.</p>
+        <label for="record-json">Record JSON</label><textarea id="record-json" spellcheck="false" rows="10" required></textarea>
+        <p id="record-message" class="status-message" role="status" aria-live="polite"></p>
+        <div class="dialog-actions"><button type="button" id="dialog-cancel" class="secondary-button">Cancel</button><button type="submit" class="primary-button">Save record</button></div>
       </form>
+    </dialog>
+    <div id="confirm-dialog" class="confirm-dialog hidden" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title">
+      <div class="confirm-card"><h3 id="confirm-title">Delete this record?</h3><p>This action cannot be undone.</p><div><button id="confirm-cancel" class="secondary-button" type="button">Cancel</button><button id="confirm-delete" class="danger-button" type="button">Delete</button></div></div>
     </div>
-    <details class="collapsible-section" open><summary>🔐 View Holdings</summary>
-      <table>
-        <thead>
-          <tr>
-            <th>Bank</th>
-            <th>Type</th>
-            <th>Amount</th>
-          </tr>
-        </thead>
-        <tbody id="banksTable"></tbody>
-      </table>
-    </details>
-  </div>
-</section>
+  </main>
 
-<!-- ================= INVESTMENTS ================= -->
-  <section class="bucket">
-    <h2>🚀 Investments</h2>
-    <h3><span id="investmentPercent">0%</span>  📈
-      <span id="investmentTotal">(Total: $0.00)</span>
-    </h3>
-    <div class="margin-left">
-      <button id="toggleInvestmentBtn" class="toggle-btn">➕ Add Investment</button>
-
-      <div id="investmentFormWrapper" class="form-wrapper">
-        <form id="investmentForm">
-          <input id="platform" placeholder="Platform / Branch" required />
-
-          <select id="investmentType" required>
-            <option value="">Investment Type</option>
-            <option value="Roth IRA">Roth IRA</option>
-            <option value="Traditional IRA">Traditional IRA</option>
-            <option value="Money Market">Money Market</option>
-            <option value="Brokerage">Brokerage</option>
-            <option value="Crypto">Crypto</option>
-            <option value="Other">Other</option>
-          </select>
-
-          <input id="investmentAmount" type="number" step="0.01" placeholder="Amount" required />
-
-          <button id="investmentSubmit" type="submit" disabled>Add</button>
-        </form>
-      </div>
-      <details class="collapsible-section" open><summary>🔐 View Holdings</summary>
-        <table>
-          <thead>
-            <tr>
-              <th>Platform</th>
-              <th>Type</th>
-              <th>Amount</th>
-            </tr>
-          </thead>
-          <tbody id="investmentTable"></tbody>
-        </table>
-      </details>
-    </div>
-  </section>
-
+  <script src="scripts/app.js" defer></script>
+  <script src="scripts/user-profile.js"></script>
   <script src="scripts/total_assets.js"></script>
   <script src="scripts/focus_mode.js"></script>
   <script src="scripts/pieChart.js"></script>
@@ -316,7 +429,5 @@
   <script src="/scripts/vault_assets.js"></script>
   <script src="scripts/investments.js"></script>
   <script src="scripts/bank.js"></script> 
-
 </body>
 </html>
-  
