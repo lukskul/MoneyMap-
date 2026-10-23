@@ -179,7 +179,7 @@
                   </h3>
                   <p><span id="emergencyStatus" class="status-indicator"></span></p>
                   <div class="margin-left">
-                    <button id="toggleVaultBtn" class="primary-button">ADD CASH</button>
+                    <button id="toggleVaultBtn" class="toggle-btn" >Add Cash</button>
                     <div id="vaultFormWrapper" class="form-wrapper">
                       <form id="vaultForm">
 
@@ -201,7 +201,7 @@
                         <label>Quantity</label>
                         <input type="number" id="cashQuantity" min="1">
 
-                        <button type="submit" id="vaultSubmit" class="toggle-btn" disabled>Add Cash</button>
+                        <button type="submit" id="vaultSubmit" class="toggle-btn" disabled>🔳 Add Cash to Vault</button>
                       </form>
                     </div>
                     <details class="collapsible-section"> <summary>🔐 View Holdings</summary>
@@ -228,7 +228,7 @@
                       <div id="lastUpdated" style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;"></div>
                     </div>
                   
-                    <button id="toggleFormBtn" class="primary-button" >NEW COIN</button>
+                    <button id="toggleFormBtn">Add Coin</button>
                     <div id="formWrapper" class="form-wrapper">
                       <form id="entryForm">
                         <div class="inline-group">
@@ -263,7 +263,7 @@
                           <input type="number" id="buyPrice" step="0.01" min="0" required>
                         </div>
                     
-                        <button id="submitBtn" type="submit" disabled>Add to Wallet</button>
+                        <button id="submitBtn" type="submit" class="toggle-btn" disabled>🔳 Add Coin to Vault</button>
                       </form>
                     </div>
                     <details class="collapsible-section"><summary>🔐 View Holdings</summary>
@@ -293,7 +293,7 @@
                 <span id="banksTotal"></span>
               </h3>
               <div class="margin-left">
-                <button id="toggleBankBtn">➕ Add Account</button>
+                <button id="toggleBankBtn" class="toggle-btn">Add Account</button>
 
                 <div id="bankFormWrapper" class="form-wrapper">
                   <form id="bankForm">
@@ -307,7 +307,7 @@
 
                     <input id="amount" type="number" step="0.01" placeholder="Amount" />
 
-                    <button id="bankSubmit" type="submit" disabled>Add</button>
+                    <button id="bankSubmit" type="submit" class="toggle-btn" disabled>🔳 Add Account to Money Map</button>
                   </form>
                 </div>
                 <details class="collapsible-section" open><summary>🔐 View Holdings</summary>
@@ -332,7 +332,7 @@
                   <span id="investmentTotal">(Total: $0.00)</span>
                 </h3>
                 <div class="margin-left">
-                  <button id="toggleInvestmentBtn" class="toggle-btn">➕ Add Investment</button>
+                  <button id="toggleInvestmentBtn" class="toggle-btn">Add Investment</button>
 
                   <div id="investmentFormWrapper" class="form-wrapper">
                     <form id="investmentForm">
@@ -350,7 +350,7 @@
 
                       <input id="investmentAmount" type="number" step="0.01" placeholder="Amount" required />
 
-                      <button id="investmentSubmit" type="submit" disabled>Add</button>
+                      <button id="investmentSubmit" type="submit" class="toggle-btn" disabled>🔳 Add Investment to Money Map</button>
                     </form>
                   </div>
                   <details class="collapsible-section" open><summary>🔐 View Holdings</summary>

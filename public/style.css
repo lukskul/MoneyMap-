@@ -219,7 +219,7 @@ span {
 /* ================= BUTTONS ================= */
 button,
 .toggle-btn {
-  background-color: #3498db;
+  background-color: rgb(93, 157, 93);
   color: #fff;
   border: none;
   padding: 0.4rem 0.8rem;
@@ -232,7 +232,7 @@ button,
 
 button:hover,
 .toggle-btn:hover {
-  background-color: #2980b9;
+  background-color: #232c22;
   transform: translateY(-1px);
 }
 

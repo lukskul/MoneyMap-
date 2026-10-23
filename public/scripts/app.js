@@ -3,12 +3,12 @@
   'use strict';
 
   const API_BASE = ''; // Same-origin recommended: serve this UI from the Express server.
-  const RESOURCE_CONFIG = {
-    metals: { title: 'Metals', endpoint: '/api/metals', collection: 'holdings', addLabel: 'Add holding', example: { name: 'Gold', type: 'Gold', quantity: 1, unit: 'oz', purchasePrice: 0 }, subtitleKeys: ['type', 'quantity', 'unit', 'weight', 'purity'], amountKeys: ['value', 'currentValue', 'purchasePrice', 'totalValue', 'price'] },
-    vault: { title: 'Vault', endpoint: '/api/vault', collection: 'vault', addLabel: 'Add item', example: { name: 'New vault item', description: '', value: 0 }, subtitleKeys: ['description', 'category', 'location', 'quantity'], amountKeys: ['value', 'estimatedValue', 'amount'] },
-    banks: { title: 'Bank accounts', endpoint: '/api/banks', collection: 'accounts', addLabel: 'Add account', example: { name: 'Checking account', institution: '', balance: 0, accountType: 'Checking' }, subtitleKeys: ['institution', 'bank', 'accountType', 'type', 'lastFour'], amountKeys: ['balance', 'amount', 'value'] },
-    investments: { title: 'Investments', endpoint: '/api/investments', collection: 'investments', addLabel: 'Add investment', example: { name: 'New investment', ticker: '', quantity: 0, value: 0 }, subtitleKeys: ['ticker', 'type', 'quantity', 'shares', 'institution'], amountKeys: ['value', 'currentValue', 'marketValue', 'amount', 'balance'] }
-  };
+  // // const RESOURCE_CONFIG = {
+  // //   metals: { title: 'Metals', endpoint: '/api/metals', collection: 'holdings', addLabel: 'Add holding', example: { name: 'Gold', type: 'Gold', quantity: 1, unit: 'oz', purchasePrice: 0 }, subtitleKeys: ['type', 'quantity', 'unit', 'weight', 'purity'], amountKeys: ['value', 'currentValue', 'purchasePrice', 'totalValue', 'price'] },
+  // //   vault: { title: 'Vault', endpoint: '/api/vault', collection: 'vault', addLabel: 'Add item', example: { name: 'New vault item', description: '', value: 0 }, subtitleKeys: ['description', 'category', 'location', 'quantity'], amountKeys: ['value', 'estimatedValue', 'amount'] },
+  // //   banks: { title: 'Bank accounts', endpoint: '/api/banks', collection: 'accounts', addLabel: 'Add account', example: { name: 'Checking account', institution: '', balance: 0, accountType: 'Checking' }, subtitleKeys: ['institution', 'bank', 'accountType', 'type', 'lastFour'], amountKeys: ['balance', 'amount', 'value'] },
+  // //   investments: { title: 'Investments', endpoint: '/api/investments', collection: 'investments', addLabel: 'Add investment', example: { name: 'New investment', ticker: '', quantity: 0, value: 0 }, subtitleKeys: ['ticker', 'type', 'quantity', 'shares', 'institution'], amountKeys: ['value', 'currentValue', 'marketValue', 'amount', 'balance'] }
+  // // };
 
   const state = { mode: 'login', user: null, profile: {}, records: { metals: [], vault: [], banks: [], investments: [] }, editing: null, pendingDelete: null };
   const $ = (selector, root = document) => root.querySelector(selector);
@@ -80,48 +80,75 @@
     } finally { button.disabled = false; }
   });
 
-  async function checkSession() {
-    try {
-      const result = await api('/api/auth/me');
-      state.user = result.user || result;
-      showDashboard();
-      await loadAll();
-    } catch { showAuth(); }
-  }
-  $('#logout-button').addEventListener('click', async () => {
-    try { await api('/api/auth/logout', { method: 'POST' }); } catch { /* Still return to the sign-in screen. */ }
-    state.user = null;
-    state.records = { metals: [], vault: [], banks: [], investments: [] };
-    state.profile = {};
-    showAuth();
-  });
 
-  const titles = { overview: 'Overview', metals: 'Metals', vault: 'Vault', banks: 'Bank accounts', investments: 'Investments', profile: 'Goals & profile' };
-  function navigate(view) {
-    if (!titles[view]) return;
-    $$('.view-section').forEach(section => section.classList.add('hidden'));
-    $(`#view-${view}`).classList.remove('hidden');
-    $$('.nav-item').forEach(button => button.classList.toggle('active', button.dataset.view === view));
-    $('#page-title').textContent = titles[view];
-    $('#page-eyebrow').textContent = view === 'overview' ? 'YOUR FINANCIAL SNAPSHOT' : 'MONEY MAP WORKSPACE';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+async function checkSession() {
+  try {
+    const res = await fetch('/api/auth/me', {
+      credentials: 'include'
+    });
+
+    if (res.status === 401) {
+      console.info('Money Map: No active session. Please log in.');
+      showAuth();
+      return;
+    }
+
+    if (!res.ok) {
+      console.error(
+        `Money Map: Session check failed (${res.status}).`
+      );
+      showAuth();
+      return;
+    }
+
+    const data = await res.json();
+
+    state.user = data.user;
+    console.info('Money Map: Existing session restored.');
+
+    showDashboard();
+    await loadAll();
+
+  } catch (error) {
+    console.error('Money Map: Unable to check session.', error);
+    showAuth();
   }
-  document.addEventListener('click', event => {
-    const viewButton = event.target.closest('[data-view]');
-    if (viewButton) navigate(viewButton.dataset.view);
-    const addButton = event.target.closest('[data-open-editor]');
-    if (addButton) openEditor(addButton.dataset.openEditor);
-    const editButton = event.target.closest('[data-edit-record]');
-    if (editButton) openEditor(editButton.dataset.editRecord, Number(editButton.dataset.index));
-    const deleteButton = event.target.closest('[data-delete-record]');
-    if (deleteButton) askDelete(deleteButton.dataset.deleteRecord, Number(deleteButton.dataset.index));
-  });
-  $('#refresh-button').addEventListener('click', async () => {
-    $('#refresh-button').disabled = true;
-    try { await loadAll(); showGlobal('Your data has been refreshed.', 'success'); }
-    catch (error) { showGlobal(error.message, 'error'); }
-    finally { $('#refresh-button').disabled = false; }
-  });
+}
+
+  // $('#logout-button').addEventListener('click', async () => {
+  //   try { await api('/api/auth/logout', { method: 'POST' }); } catch { /* Still return to the sign-in screen. */ }
+  //   state.user = null;
+  //   state.records = { metals: [], vault: [], banks: [], investments: [] };
+  //   state.profile = {};
+  //   showAuth();
+  // });
+
+  // const titles = { overview: 'Overview', metals: 'Metals', vault: 'Vault', banks: 'Bank accounts', investments: 'Investments', profile: 'Goals & profile' };
+  // function navigate(view) {
+  //   if (!titles[view]) return;
+  //   $$('.view-section').forEach(section => section.classList.add('hidden'));
+  //   $(`#view-${view}`).classList.remove('hidden');
+  //   $$('.nav-item').forEach(button => button.classList.toggle('active', button.dataset.view === view));
+  //   $('#page-title').textContent = titles[view];
+  //   $('#page-eyebrow').textContent = view === 'overview' ? 'YOUR FINANCIAL SNAPSHOT' : 'MONEY MAP WORKSPACE';
+  //   window.scrollTo({ top: 0, behavior: 'smooth' });
+  // }
+  // document.addEventListener('click', event => {
+  //   const viewButton = event.target.closest('[data-view]');
+  //   if (viewButton) navigate(viewButton.dataset.view);
+  //   const addButton = event.target.closest('[data-open-editor]');
+  //   if (addButton) openEditor(addButton.dataset.openEditor);
+  //   const editButton = event.target.closest('[data-edit-record]');
+  //   if (editButton) openEditor(editButton.dataset.editRecord, Number(editButton.dataset.index));
+  //   const deleteButton = event.target.closest('[data-delete-record]');
+  //   if (deleteButton) askDelete(deleteButton.dataset.deleteRecord, Number(deleteButton.dataset.index));
+  // });
+  // $('#refresh-button').addEventListener('click', async () => {
+  //   $('#refresh-button').disabled = true;
+  //   try { await loadAll(); showGlobal('Your data has been refreshed.', 'success'); }
+  //   catch (error) { showGlobal(error.message, 'error'); }
+  //   finally { $('#refresh-button').disabled = false; }
+  // });
 
   function showGlobal(message, type = '') {
     const element = $('#global-message');

@@ -169,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
       design !== '';
 
     submitBtn.disabled = !isValid;
-    submitBtn.style.backgroundColor = isValid ? '#4CAF50' : '#ccc';
+    //submitBtn.style.backgroundColor = isValid ? '#4CAF50' : '#ccc';
     submitBtn.style.cursor = isValid ? 'pointer' : 'not-allowed';
   }
 

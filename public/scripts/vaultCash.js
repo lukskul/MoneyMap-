@@ -1,6 +1,5 @@
 
 /* ================= VAULT DATA ================= */
-window.getVaultTotal = window.getvaultCashTotal;
 
 async function fetchVault() {
   const res = await fetch('/api/vault', {
@@ -41,6 +40,7 @@ window.getvaultCashTotal = async function () {
 };
 
 window.getVaultCashTotal = window.getvaultCashTotal;
+window.getVaultTotal = window.getvaultCashTotal;
 
 
 /* ================= RENDER ================= */
@@ -70,11 +70,8 @@ async function renderVault() {
 const vaultCashTotalEl = document.getElementById('vaultCashTotal');
 
 if (vaultCashTotalEl) {
-  vaultCashTotalEl.textContent = `$${totalValue.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  })}`;
-  vaultCashTotalEl.dataset.total = totalValue; // store live value
+  vaultCashTotalEl.dataset.total = totalValue;
+  animateVaultDisplay(totalValue);
 }
 
   // Update bucketTotals for total-assets
@@ -97,15 +94,15 @@ async function updateVaultUI() {
   await window.recalculateMonthsToGoal();
 }
 
-let vaultAnimationFrame;
+
+let vaultAnimationFrame = null;
 let currentVaultDisplay = 0;
 
 function animateVaultDisplay(targetValue) {
   const vaultCashTotal = document.getElementById('vaultCashTotal');
-
   if (!vaultCashTotal) return;
 
-  if (vaultAnimationFrame) {
+  if (vaultAnimationFrame !== null) {
     cancelAnimationFrame(vaultAnimationFrame);
   }
 
@@ -118,43 +115,35 @@ function animateVaultDisplay(targetValue) {
   }
 
   function frame(time) {
-    const progress = Math.min((time - startTime) / duration, 1);
+    const progress = Math.min(
+      (time - startTime) / duration,
+      1
+    );
+
     const eased = easeOutCubic(progress);
 
     const value = Math.round(
       startValue + (targetValue - startValue) * eased
     );
 
-    vaultCashTotal.textContent = `$${value.toLocaleString()}`;
+    vaultCashTotal.textContent = `$${value.toLocaleString(
+      undefined,
+      {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }
+    )}`;
 
     if (progress < 1) {
       vaultAnimationFrame = requestAnimationFrame(frame);
     } else {
       currentVaultDisplay = targetValue;
+      vaultAnimationFrame = null;
     }
   }
 
   vaultAnimationFrame = requestAnimationFrame(frame);
 }
-  function frame(time) {
-
-    const progress = Math.min((time - startTime) / duration, 1);
-    const eased = easeOutCubic(progress);
-
-    const value = Math.round(
-      startValue + (targetValue - startValue) * eased
-    );
-
-    vaultCashTotal.textContent = `$${value.toLocaleString()}`;
-
-    if (progress < 1) {
-      vaultAnimationFrame = requestAnimationFrame(frame);
-    } else {
-      currentVaultDisplay = targetValue;
-    }
-  }
-
-  vaultAnimationFrame = requestAnimationFrame(frame);
 
 
 /* ================= FORM & EVENTS ================= */
