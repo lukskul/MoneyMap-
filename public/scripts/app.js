@@ -178,18 +178,61 @@ async function checkSession() {
     });
     renderOverview();
   }
-  async function loadPrices() {
+
+async function loadPrices() {
+  let prices;
+
+  try {
+    prices = await api('/api/spot-prices');
+
+    if (
+      !prices ||
+      typeof prices.gold !== 'number' ||
+      typeof prices.silver !== 'number' ||
+      typeof prices.copper !== 'number'
+    ) {
+      throw new Error('Invalid spot price data');
+    }
+
+    localStorage.setItem('spotCache', JSON.stringify(prices));
+  } catch (error) {
+    console.warn('Could not fetch spot prices:', error.message);
+
     try {
-      const result = await api('/api/spot-prices');
-      const prices = result?.spotPrices || result?.prices || result || {};
-      $('#price-gold').textContent = priceText(prices.gold);
-      $('#price-silver').textContent = priceText(prices.silver);
-      $('#price-copper').textContent = priceText(prices.copper);
-      $('#prices-updated').textContent = prices.lastUpdated ? `Updated ${new Date(prices.lastUpdated).toLocaleString()}` : 'From your server';
+      prices = JSON.parse(localStorage.getItem('spotCache')) || {};
     } catch {
-      $('#prices-updated').textContent = 'Prices unavailable';
+      prices = {};
     }
   }
+
+  const gold = Number(prices.gold) || 0;
+  const silver = Number(prices.silver) || 0;
+  const copper = Number(prices.copper) || 0;
+
+  // Overview spot-price panel
+  if ($('#price-gold')) $('#price-gold').textContent = money(gold);
+  if ($('#price-silver')) $('#price-silver').textContent = money(silver);
+  if ($('#price-copper')) $('#price-copper').textContent = money(copper);
+
+  // Metals page / bottom price display
+  if ($('#goldSpot')) {
+    $('#goldSpot').textContent = `Gold: ${money(gold)}`;
+  }
+  if ($('#silverSpot')) {
+    $('#silverSpot').textContent = `Silver: ${money(silver)}`;
+  }
+  if ($('#copperSpot')) {
+    $('#copperSpot').textContent = `Copper: ${money(copper)}`;
+  }
+
+  const updated = $('#prices-updated');
+  if (updated) {
+    updated.textContent = prices.lastUpdated
+      ? `Updated ${new Date(prices.lastUpdated).toLocaleString()}`
+      : 'Using cached prices';
+  }
+}
+
   function priceText(value) {
     if (value === null || value === undefined || value === '') return '—';
     if (typeof value === 'number') return money(value);
@@ -197,15 +240,6 @@ async function checkSession() {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? money(parsed) : String(value);
   }
-
-
-
-
-
-
-
-
-
 
 async function loadAll() {
   showGlobal('');
@@ -256,34 +290,93 @@ const refreshers = [
 
   renderOverview();
 
-  if (failures.length) {
-    showGlobal(`Some data could not load: ${failures.join(' · ')}`, 'error');
+  if (window.updateEmergencyOverview) {
+    await window.updateEmergencyOverview();
   }
 }
 
 
+/* ================= EMERGENCY OVERVIEW ================= */
 
 
 
+window.updateEmergencyOverview = async function () {
+  const amountEl = $('#metric-emergency');
+  const subtitleEl = $('#emergency-subtitle');
 
+  if (!amountEl) return;
+  if (typeof window.calculateEmergencyFund !== 'function') return;
 
+  try {
+    const data = await window.calculateEmergencyFund();
+    if (!data) return;
 
+    const target = Math.max(Number(data.target) || 0, 0);
+    const vaultTotal = Math.max(Number(data.vaultTotal) || 0, 0);
 
-  function renderOverview() {
-    const p = state.profile || {};
-    const income = Number(p.monthlyIncome) || 0;
-    const expenses = Number(p.monthlyExpenses) || 0;
-    $('#metric-income').textContent = money(income);
-    $('#metric-expenses').textContent = money(expenses);
-    $('#metric-difference').textContent = money(income - expenses);
-    $('#metric-emergency').textContent = money(expenses * (Number(p.emergencyMonths) || 0));
-    $('#emergency-subtitle').textContent = `${Number(p.emergencyMonths) || 0} months of expenses`;
-    $('#goal-focus').textContent = p.focusMode || 'Set your financial focus';
-    $('#goal-subgoal').textContent = p.savingsSubgoal || 'Add a savings goal in your profile.';
-    $('#goal-loan').textContent = money(p.loanAmount);
-    $('#goal-downpayment').textContent = money(p.downPayment);
-    $('#goal-months').textContent = Number(p.monthsToGoal) > 0 ? p.monthsToGoal : '—';
+    // Only count money up to the emergency fund target.
+    const emergencySaved = Math.min(target, vaultTotal);
+    const targetIsZero = target === 0;
+
+    // Calculate percentage from the actual saved amount.
+    const percentFunded = targetIsZero
+      ? 0
+      : Math.min((emergencySaved / target) * 100, 100);
+
+    amountEl.textContent = money(emergencySaved);
+
+    let color = '#ef4444'; // Red: 0%
+
+    if (!targetIsZero) {
+      if (percentFunded >= 100) {
+        color = '#22c55e'; // Green: 100%
+      } else if (percentFunded >= 50) {
+        color = '#f59e0b'; // Orange: 50–99%
+      } else if (percentFunded >= 25) {
+        color = '#eab308'; // Yellow: 25–49%
+      } else if (percentFunded > 0) {
+        color = '#fb923c'; // Light orange: 1–24%
+      }
+    }
+
+    amountEl.style.color = color;
+
+    if (subtitleEl) {
+      subtitleEl.textContent = targetIsZero
+        ? '0-month emergency goal'
+        : `${Math.round(percentFunded)}% funded`;
+    }
+  } catch (error) {
+    console.error('Error updating emergency overview:', error);
   }
+};
+
+
+function renderOverview() {
+  const p = state.profile || {};
+  const income = Number(p.monthlyIncome) || 0;
+  const expenses = Number(p.monthlyExpenses) || 0;
+  const months = Number(p.emergencyMonths) || 0;
+
+  const setText = (selector, value) => {
+    const element = $(selector);
+    if (element) element.textContent = value;
+  };
+
+  setText('#metric-income', money(income));
+  setText('#metric-expenses', money(expenses));
+  setText('#metric-difference', money(income - expenses));
+
+  // The emergency card is refreshed by updateEmergencyOverview().
+  setText('#emergency-subtitle', `${months} months of expenses`);
+
+  setText('#goal-focus', p.focusMode || 'Set your financial focus');
+  setText('#goal-subgoal', p.savingsSubgoal || 'Add a savings goal in your profile.');
+  setText('#goal-loan', money(p.loanAmount));
+  setText('#goal-downpayment', money(p.downPayment));
+  setText('#goal-months', Number(p.monthsToGoal) > 0 ? p.monthsToGoal : '—');
+}
+
 
   function recordName(record, index) {
     return record?.name || record?.title || record?.description || record?.ticker || record?.institution || `${RESOURCE_CONFIG[state.editing?.resource]?.title || 'Record'} ${index + 1}`;
@@ -351,10 +444,31 @@ const refreshers = [
     finally { button.disabled = false; }
   });
 
-  function askDelete(name, index) {
-    state.pendingDelete = { resource: name, index };
-    $('#confirm-dialog').classList.remove('hidden');
+
+/* ================= REFRESH APP OVERVIEW ================= */
+
+window.refreshAppOverview = async function () {
+  try {
+    const data = await api('/api/profile');
+
+    state.profile = data?.profile || data || {};
+
+    renderOverview();
+
+    // Refresh emergency amount and color too.
+    if (window.updateEmergencyOverview) {
+      await window.updateEmergencyOverview();
+    }
+  } catch (error) {
+    console.warn('Could not refresh app overview:', error);
   }
+};
+
+
+  // function askDelete(name, index) {
+  //   state.pendingDelete = { resource: name, index };
+  //   $('#confirm-dialog').classList.remove('hidden');
+  // }
   function closeConfirm() { $('#confirm-dialog').classList.add('hidden'); state.pendingDelete = null; }
   $('#confirm-cancel').addEventListener('click', closeConfirm);
   $('#confirm-delete').addEventListener('click', async () => {

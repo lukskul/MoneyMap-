@@ -43,6 +43,7 @@ window.getVaultCashTotal = window.getvaultCashTotal;
 window.getVaultTotal = window.getvaultCashTotal;
 
 
+
 /* ================= RENDER ================= */
 
 async function renderVault() {
@@ -50,34 +51,59 @@ async function renderVault() {
   const table = document.getElementById('vaultTable');
   table.innerHTML = '';
 
-  let totalValue = 0;
+  // Group entries for display without changing the saved JSON.
+  const groupedVault = new Map();
 
   vault.forEach(entry => {
+    const denomination = Number(entry.denomination);
+    const year = entry.year == null || entry.year === ''
+      ? 'Assorted'
+      : String(entry.year);
+
+    const key = `${denomination}|${year}`;
+
+    if (!groupedVault.has(key)) {
+      groupedVault.set(key, {
+        denomination,
+        year,
+        quantity: 0
+      });
+    }
+
+    groupedVault.get(key).quantity += Number(entry.quantity) || 0;
+  });
+
+  let totalValue = 0;
+
+  // Render the grouped entries.
+  groupedVault.forEach(entry => {
     const rowTotal = entry.denomination * entry.quantity;
     totalValue += rowTotal;
 
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>$${entry.denomination}</td>
-      <td>${entry.year || 'Assorted'}</td>
+      <td>${entry.year}</td>
       <td>${entry.quantity}</td>
       <td>$${rowTotal.toFixed(2)}</td>
     `;
+
     table.appendChild(row);
   });
 
-// Update per-bucket total display
-const vaultCashTotalEl = document.getElementById('vaultCashTotal');
+  // Update per-bucket total display.
+  const vaultCashTotalEl = document.getElementById('vaultCashTotal');
 
-if (vaultCashTotalEl) {
-  vaultCashTotalEl.dataset.total = totalValue;
-  animateVaultDisplay(totalValue);
-}
+  if (vaultCashTotalEl) {
+    vaultCashTotalEl.dataset.total = totalValue;
+    animateVaultDisplay(totalValue);
+  }
 
-  // Update bucketTotals for total-assets
+  // Update bucketTotals for total-assets.
   window.bucketTotals = window.bucketTotals || {};
   window.bucketTotals.vault = totalValue;
 }
+
 
 /* ================= UI UPDATE ================= */
 
@@ -87,12 +113,17 @@ async function updateVaultUI() {
   if (window.updateEmergency)
     await window.updateEmergency();
 
+  // Refresh the emergency overview in app.js.
+  if (window.updateEmergencyOverview)
+    await window.updateEmergencyOverview();
+
   if (window.updateTotalAssets)
     await window.updateTotalAssets();
 
   if (window.recalculateMonthsToGoal)
-  await window.recalculateMonthsToGoal();
+    await window.recalculateMonthsToGoal();
 }
+
 
 
 let vaultAnimationFrame = null;

@@ -49,6 +49,46 @@ Your assets. Your goals. Your financial direction. All in one place.
     npm install 
     npm start 
 
+## How to Get real gold and silver spot prices to reflect on my App: Setup
+
+Money Map uses [GoldAPI.io](https://www.goldapi.io/) to retrieve precious metal spot prices. Each user must provide their own API key.
+
+### 1. Get an API Key
+
+1. Visit [GoldAPI.io](https://www.goldapi.io/).
+2. Create an account and obtain your API key.
+
+### 2. Create a `.env` File
+
+In the root directory of the project, in the same folder as `server.js`, create a file named `.env`.
+
+Add your API key:
+
+```env
+GOLD_API_KEY=your_api_key_here
+```
+
+Replace `your_api_key_here` with your own GoldAPI key.
+
+### 3. Install Dependencies
+
+Run the following commands in the project directory:
+
+```bash
+npm install
+npm install dotenv
+```
+
+### 4. Restart Money Map
+
+Save the `.env` file and restart the application.
+
+### Security
+
+- Never commit your `.env` file to GitHub.
+- Ensure `.env` is included in `.gitignore`.
+- Keep your API key private. Each user should use their own key.
+
 
 
 ## Things to Do :

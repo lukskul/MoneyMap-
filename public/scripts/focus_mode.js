@@ -103,33 +103,51 @@ document.addEventListener("DOMContentLoaded", async () => {
   /* ================= CORE CALCULATION ================= */
 
 async function calculateMonthsToGoal() {
-
   try {
-
     const emergencyData = await window.calculateEmergencyFund();
+
     if (!emergencyData) return { status: "error" };
 
-    const { target: emergencyTarget } = emergencyData;
+    const emergencyTarget = Math.max(
+      Number(emergencyData.target) || 0,
+      0
+    );
 
     const income = Number(incomeInput?.value || 0);
     const expenses = Number(expensesInput?.value || 0);
 
     const vaultBalance = window.getVaultTotal
-      ? await window.getVaultTotal()
+      ? Number(await window.getVaultTotal()) || 0
       : 0;
 
     const bankBalance = window.getBanksTotal
-      ? await window.getBanksTotal()
+      ? Number(await window.getBanksTotal()) || 0
       : 0;
 
     const totalCash = vaultBalance + bankBalance;
 
-    const usableSavings = Math.max(totalCash - emergencyTarget, 0);
+    // Protect the emergency fund target from other savings goals.
+    const usableSavings = Math.max(
+      totalCash - emergencyTarget,
+      0
+    );
 
-    const goalAmount = getGoalAmount();
-    const remainingGoal = Math.max(goalAmount - usableSavings, 0);
+    const goalAmount = Math.max(Number(getGoalAmount()) || 0, 0);
+    const remainingGoal = Math.max(
+      goalAmount - usableSavings,
+      0
+    );
 
     const surplus = income - expenses;
+
+    if (remainingGoal === 0) {
+      return {
+        status: "complete",
+        goalAmount,
+        remainingGoal: 0,
+        months: 0
+      };
+    }
 
     if (surplus <= 0) {
       return {
@@ -140,16 +158,9 @@ async function calculateMonthsToGoal() {
     }
 
     const savingsPerMonth = surplus * 0.75;
-
-    if (remainingGoal === 0) {
-      return {
-        status: "complete",
-        goalAmount,
-        months: 0
-      };
-    }
-
-    const months = Math.ceil(remainingGoal / savingsPerMonth);
+    const months = Math.ceil(
+      remainingGoal / savingsPerMonth
+    );
 
     return {
       status: "progress",
@@ -159,16 +170,12 @@ async function calculateMonthsToGoal() {
       savingsPerMonth
     };
 
-
   } catch (err) {
-
     console.warn("Goal calculation failed", err);
-
     return { status: "error" };
-
   }
-
 }
+
 window.calculateMonthsToGoal = calculateMonthsToGoal;
 
   /* ================= ANIMATION ================= */
@@ -277,11 +284,15 @@ async function saveProfile() {
     });
 
     if (!res.ok) throw new Error("Save failed");
+      currentSettings = { ...currentSettings, ...payload };
 
-    currentSettings = { ...currentSettings, ...payload };
+      await updateGoalMessage();
+      await updateEmergency();
 
-    await updateGoalMessage();
-    await updateEmergency();
+      // Refresh income, expenses, cash flow, and emergency overview.
+      if (window.refreshAppOverview) {
+        await window.refreshAppOverview();
+      }
 
     return true;
 

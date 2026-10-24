@@ -15,4 +15,5 @@ big_database.sqlite
 *.bak
 
 # Use unique user data
-/privateData
+/privateData/
+.env

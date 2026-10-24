@@ -2,6 +2,7 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 
+require('dotenv').config();
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
@@ -57,13 +58,19 @@ function writeJSON(filePath, data, res) {
     });
     fs.renameSync(temp, filePath);
 
-    return res.json({ success: true });
+    if (res) return res.json({ success: true });
+    return true;
   } catch (error) {
     console.error('Failed to write JSON:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to save data'
-    });
+
+    if (res) {
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to save data'
+      });
+    }
+
+    throw error;
   }
 }
 
@@ -337,70 +344,116 @@ app.post('/api/profile', (req, res) => {
 
 
 /* ================= METALS ================= */
-app.get('/api/spot-prices', async (req, res) => {
-  const cache = readJSON(req.userFiles.spotPrices, {});
-  const ONE_HOUR = 60 * 60 * 1000;
 
-  if (cache.lastUpdated && Date.now() - cache.lastUpdated < ONE_HOUR) {
+
+app.get('/api/spot-prices', async (req, res) => {
+  const ONE_HOUR = 60 * 60 * 1000;
+  const file = req.userFiles?.spotPrices;
+
+  if (!file) {
+    return res.status(500).json({
+      error: 'Spot price cache path is unavailable. Check user file setup.'
+    });
+  }
+
+  const cache = readJSON(file, {});
+  const hasCachedPrices =
+    Number(cache.gold) > 0 && Number(cache.silver) > 0;
+
+  // Use a valid cache for up to one hour.
+  if (
+    hasCachedPrices &&
+    cache.lastUpdated &&
+    Date.now() - Number(cache.lastUpdated) < ONE_HOUR
+  ) {
     return res.json(cache);
   }
 
-  try {
-    const headers = {
-      "x-access-token": process.env.GOLD_API_KEY,
-      "Content-Type": "application/json"
-    };
+  const apiKey = process.env.GOLD_API_KEY;
 
-    const gold = await fetch("https://www.goldapi.io/api/XAU/USD", { headers }).then(r => r.json());
-    const silver = await fetch("https://www.goldapi.io/api/XAG/USD", { headers }).then(r => r.json());
+  if (!apiKey) {
+    console.error('Spot prices: GOLD_API_KEY is missing.');
+
+    if (hasCachedPrices) {
+      return res.json({ ...cache, stale: true });
+    }
+
+    return res.status(500).json({
+      error: 'GOLD_API_KEY is not configured on the server.'
+    });
+  }
+
+  async function fetchMetal(symbol) {
+    const response = await fetch(
+      `https://www.goldapi.io/api/${symbol}/USD`,
+      {
+        headers: {
+          'x-access-token': apiKey,
+          'Accept': 'application/json'
+        }
+      }
+    );
+
+    const body = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      console.error(
+        `GoldAPI ${symbol} failed:`,
+        response.status,
+        body
+      );
+
+      throw new Error(
+        `GoldAPI ${symbol} returned HTTP ${response.status}`
+      );
+    }
+
+    const price = Number(body.price);
+
+    if (!Number.isFinite(price) || price <= 0) {
+      console.error(`GoldAPI ${symbol} returned invalid price:`, body);
+      throw new Error(`GoldAPI ${symbol} returned no valid price`);
+    }
+
+    return price;
+  }
+
+  try {
+    const [goldPrice, silverPrice] = await Promise.all([
+      fetchMetal('XAU'),
+      fetchMetal('XAG')
+    ]);
 
     const data = {
-      gold: gold.price || cache.gold || 0,
-      silver: silver.price || cache.silver || 0,
-      copper: cache.copper || 1.99,
+      gold: goldPrice,
+      silver: silverPrice,
+      copper: Number(cache.copper) > 0 ? Number(cache.copper) : 1.99,
       lastUpdated: Date.now()
     };
 
-    fs.writeFileSync(req.userFiles.spotPrices, JSON.stringify(data, null, 2));
+    writeJSON(file, data);
 
-    res.json(data);
+    console.log('Spot prices updated:', {
+      gold: data.gold,
+      silver: data.silver
+    });
+
+    return res.json(data);
 
   } catch (err) {
+    console.error('Spot price update failed:', err.message);
 
-    if (cache.gold) {
-      return res.json(cache); // fallback
+    if (hasCachedPrices) {
+      return res.json({ ...cache, stale: true });
     }
 
-    res.status(500).send("Failed to fetch spot prices");
+    return res.status(502).json({
+      error: 'Failed to fetch spot prices.',
+      details: err.message
+    });
   }
 });
 
-app.get('/api/metals', (req, res) => {
-  const metals = readJSON(req.userFiles.metals, { holdings: [] });
-  res.json(metals);
-});
-
-app.post('/api/metals', (req, res) => {
-  const { metals, weight, quantity, buyPrice, design } = req.body; // <-- use 'metals'
-
-  if (!metals || typeof weight !== 'number' || typeof quantity !== 'number' || typeof buyPrice !== 'number') {
-    return res.status(400).send('Invalid metals entry');
-  }
-
-  const metalsData = readJSON(req.userFiles.metals, { holdings: [] });
-  metalsData.holdings.push({ metals, weight, quantity, buyPrice, design: design || '' });
-  writeJSON(req.userFiles.metals, metalsData, res);
-});
-
-app.delete('/api/metals/:index', (req, res) => {
-  const index = parseInt(req.params.index);
-  const metals = readJSON(req.userFiles.metals, { holdings: [] });
-
-  if (index < 0 || index >= metals.holdings.length) return res.status(400).send('Invalid index');
-
-  metals.holdings.splice(index, 1);
-  writeJSON(req.userFiles.metals, metals, res);
-});
 
 /* ================= VAULT ================= */
 app.get('/api/vault', (req, res) => {
@@ -428,6 +481,11 @@ app.post('/api/vault', (req, res) => {
   });
 
   writeJSON(req.userFiles.vault, vault, res);
+});
+
+app.get('/api/metals', (req, res) => {
+  const metals = readJSON(req.userFiles.metals, { holdings: [] });
+  res.json(metals);
 });
 
 /* ================= BANKS API ================= */

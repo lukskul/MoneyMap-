@@ -169,27 +169,48 @@ window.updateEmergency = async function () {
       maximumFractionDigits: 2
     })}`;
 
-  let message = '';
-  let color = 'lightgray';
 
-  if (target === 0) {
-    message =
-      `Save at least ${money(monthlyExpenses)} (1 month expenses) for an emergency fund.`;
-  } else if (percentFunded >= 100) {
-    message =
-      `Emergency Fund: ${money(target)} saved. ${emergencyMonths} months covered.`;
-    color = 'lightgreen';
-  } else if (vaultTotal === 0) {
-    message =
-      `Emergency Fund: $0 saved. Goal ${money(target)} (${emergencyMonths} months).`;
-    color = 'lightblue';
-  } else {
-    message =
-      `Emergency Fund: ${money(vaultTotal)} saved. ` +
-      `${monthsCovered.toFixed(1)} months covered. ` +
-      `${percentFunded.toFixed(0)}% of ${money(target)} goal.`;
-    color = 'orange';
-  }
+let message = '';
+let color = '#ef4444'; // Red: 0% funded
+
+if (target === 0) {
+  message =
+    `It's a good idea to prepare for an emergency. Set aside money for emergencies in Settings. ` +
+    `If possible, aim for 6 months of expenses.`;
+  color = '#ef4444';
+
+} else if (percentFunded >= 100) {
+  message =
+    `Your emergency fund goal has been reached! ${money(target)} saved. ` +
+    `${emergencyMonths} months covered.`;
+  color = '#22c55e'; // Green: 100%
+
+} else if (percentFunded >= 50) {
+  message =
+    `Your emergency fund goal is ${money(target)}. You have ${money(vaultTotal)} saved. ` +
+    `${monthsCovered.toFixed(1)} months covered.`;
+  color = '#f59e0b'; // Orange: 50–99%
+
+} else if (percentFunded >= 25) {
+  message =
+    `Your emergency fund goal is ${money(target)}. You have ${money(vaultTotal)} saved. ` +
+    `${monthsCovered.toFixed(1)} months covered.`;
+  color = '#eab308'; // Yellow: 25–49%
+
+} else if (percentFunded > 0) {
+  message =
+    `Your emergency fund goal is ${money(target)}. You have ${money(vaultTotal)} saved. ` +
+    `${monthsCovered.toFixed(1)} months covered. ` +
+    `Keep setting aside money to build your emergency fund.`;
+  color = '#fb923c'; // Light orange: above 0%, below 25%
+
+} else {
+  message =
+    `Your emergency fund goal is ${money(target)}. You have ${money(vaultTotal)} saved. ` +
+    `Start setting aside money to prepare for an emergency.`;
+  color = '#ef4444'; // Red: 0%
+}
+
 
   statusEl.textContent = message;
   statusEl.style.color = color;
