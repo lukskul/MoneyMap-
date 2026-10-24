@@ -28,22 +28,43 @@ async function addVaultEntry(entry) {
   }
 }
 
-/* ================= TOTAL CALC ================= */
+
+/* ================= TOTAL ASSORTED VAULT CASH ================= */
 
 window.getvaultCashTotal = async function () {
   const vault = await fetchVault();
 
-  return vault.reduce(
-    (sum, entry) => sum + Number(entry.denomination) * Number(entry.quantity),
+  const assortedCash = vault.filter(entry => entry.year === null);
+
+  const total = assortedCash.reduce(
+    (sum, entry) =>
+      sum +
+      (Number(entry.denomination) || 0) *
+      (Number(entry.quantity) || 0),
     0
   );
+
+  console.log('[Vault] Assorted cash entries:', assortedCash);
+  console.log('[Vault] Assorted cash total:', total);
+
+  return total;
 };
 
 window.getVaultCashTotal = window.getvaultCashTotal;
 window.getVaultTotal = window.getvaultCashTotal;
 
 
+/* ================= AVAILABLE VAULT CASH ================= */
 
+// Returns assorted cash only.
+// Emergency fund protection is applied once in the overall goal calculation.
+window.getAvailableVaultCash = async function () {
+  const vaultBalance = Number(await window.getVaultTotal()) || 0;
+
+  console.log('[Vault] Available assorted cash before overall emergency reserve:', vaultBalance);
+
+  return Math.max(vaultBalance, 0);
+};
 
 /* ================= RENDER ================= */
 

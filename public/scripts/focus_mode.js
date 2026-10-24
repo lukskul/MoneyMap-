@@ -102,81 +102,253 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   /* ================= CORE CALCULATION ================= */
 
+
+
+/* ================= DOWN PAYMENT GOAL CALCULATOR ================= */
+
 async function calculateMonthsToGoal() {
+  console.group('🏡 DOWN PAYMENT GOAL CALCULATION');
+
   try {
+    console.log('Step 1: Retrieving emergency fund target...');
+
+    if (typeof window.calculateEmergencyFund !== 'function') {
+      throw new Error('window.calculateEmergencyFund is not available');
+    }
+
     const emergencyData = await window.calculateEmergencyFund();
 
-    if (!emergencyData) return { status: "error" };
+    if (!emergencyData) {
+      throw new Error('Emergency fund calculation returned no data');
+    }
 
     const emergencyTarget = Math.max(
       Number(emergencyData.target) || 0,
       0
     );
 
-    const income = Number(incomeInput?.value || 0);
-    const expenses = Number(expensesInput?.value || 0);
+    console.log('Emergency fund data:', emergencyData);
+    console.log('Protected emergency fund target:', emergencyTarget);
 
-    const vaultBalance = window.getVaultTotal
+    // Step 2: Retrieve account balances.
+    console.log('Step 2: Retrieving balances...');
+
+    const vaultBalance = typeof window.getVaultTotal === 'function'
       ? Number(await window.getVaultTotal()) || 0
       : 0;
 
-    const bankBalance = window.getBanksTotal
+    const checkingBalance = typeof window.getBanksTotal === 'function'
       ? Number(await window.getBanksTotal()) || 0
       : 0;
 
-    const totalCash = vaultBalance + bankBalance;
+    const moneyMarketBalance =
+      typeof window.getMoneyMarketTotal === 'function'
+        ? Number(await window.getMoneyMarketTotal()) || 0
+        : 0;
 
-    // Protect the emergency fund target from other savings goals.
-    const usableSavings = Math.max(
-      totalCash - emergencyTarget,
+    console.table({
+      'Vault cash': { amount: vaultBalance },
+      'Checking accounts': { amount: checkingBalance },
+      'Money market accounts': { amount: moneyMarketBalance }
+    });
+
+    if (typeof window.getMoneyMarketTotal !== 'function') {
+      console.warn(
+        'getMoneyMarketTotal() is missing. Money market balance is being treated as $0.'
+      );
+    }
+
+    // Step 3: Calculate available savings.
+    const totalEligibleSavings =
+      vaultBalance + checkingBalance + moneyMarketBalance;
+
+    const availableSavings = Math.max(
+      totalEligibleSavings - emergencyTarget,
       0
     );
 
-    const goalAmount = Math.max(Number(getGoalAmount()) || 0, 0);
+    console.log('Step 3: Savings calculation');
+    console.log('Total eligible savings:', totalEligibleSavings);
+    console.log('Less emergency fund target:', emergencyTarget);
+    console.log('Available savings for down payment:', availableSavings);
+
+    // Step 4: Retrieve the goal.
+    const rawGoalAmount = Number(getGoalAmount());
+    const goalAmount = Math.max(rawGoalAmount || 0, 0);
+
+    console.log('Step 4: Down payment goal');
+    console.log('Goal amount:', goalAmount);
+
     const remainingGoal = Math.max(
-      goalAmount - usableSavings,
+      goalAmount - availableSavings,
       0
     );
 
-    const surplus = income - expenses;
+    console.log('Remaining amount needed:', remainingGoal);
 
+    // Step 5: Calculate monthly surplus.
+    const income = Number(incomeInput?.value || 0);
+    const expenses = Number(expensesInput?.value || 0);
+    const monthlySurplus = income - expenses;
+
+    console.log('Step 5: Monthly budget');
+    console.log('Monthly income:', income);
+    console.log('Monthly expenses:', expenses);
+    console.log('Monthly surplus:', monthlySurplus);
+
+    // Step 6: Determine the estimated time.
     if (remainingGoal === 0) {
+      console.log('✅ Goal already reached.');
+      console.groupEnd();
+
       return {
-        status: "complete",
+        status: 'complete',
         goalAmount,
+        totalEligibleSavings,
+        emergencyTarget,
+        availableSavings,
         remainingGoal: 0,
+        monthlySurplus,
         months: 0
       };
     }
 
-    if (surplus <= 0) {
+    if (monthlySurplus <= 0) {
+      console.warn('⚠️ No positive monthly surplus. Cannot estimate months.');
+
+      console.groupEnd();
+
       return {
-        status: "nosurplus",
+        status: 'nosurplus',
         goalAmount,
-        remainingGoal
+        availableSavings,
+        remainingGoal,
+        monthlySurplus
       };
     }
 
-    const savingsPerMonth = surplus * 0.75;
-    const months = Math.ceil(
-      remainingGoal / savingsPerMonth
-    );
+    // Keep 25% of the surplus as a spending buffer.
+    const savingsPerMonth = monthlySurplus * 0.75;
+    const months = Math.ceil(remainingGoal / savingsPerMonth);
+
+    console.log('Step 6: Final estimate');
+    console.log('Monthly savings allocation (75%):', savingsPerMonth);
+    console.log('Estimated months:', months);
+    console.log('Estimated years:', (months / 12).toFixed(1));
+
+    console.table({
+      'Goal amount': { amount: goalAmount },
+      'Available savings': { amount: availableSavings },
+      'Remaining goal': { amount: remainingGoal },
+      'Monthly surplus': { amount: monthlySurplus },
+      'Monthly savings allocation': { amount: savingsPerMonth },
+      'Estimated months': { amount: months }
+    });
+
+    console.groupEnd();
 
     return {
-      status: "progress",
-      months,
+      status: 'progress',
       goalAmount,
+      totalEligibleSavings,
+      emergencyTarget,
+      availableSavings,
       remainingGoal,
-      savingsPerMonth
+      monthlySurplus,
+      savingsPerMonth,
+      months
     };
 
   } catch (err) {
-    console.warn("Goal calculation failed", err);
-    return { status: "error" };
+    console.error('❌ Down-payment goal calculation failed:', err);
+    console.groupEnd();
+
+    return {
+      status: 'error',
+      message: err.message
+    };
   }
 }
 
 window.calculateMonthsToGoal = calculateMonthsToGoal;
+
+
+
+// async function calculateMonthsToGoal() {
+//   try {
+//     const emergencyData = await window.calculateEmergencyFund();
+
+//     if (!emergencyData) return { status: "error" };
+
+//     const emergencyTarget = Math.max(
+//       Number(emergencyData.target) || 0,
+//       0
+//     );
+
+//     const income = Number(incomeInput?.value || 0);
+//     const expenses = Number(expensesInput?.value || 0);
+
+//     const vaultBalance = window.getVaultTotal
+//       ? Number(await window.getVaultTotal()) || 0
+//       : 0;
+
+//     const bankBalance = window.getBanksTotal
+//       ? Number(await window.getBanksTotal()) || 0
+//       : 0;
+
+//     const totalCash = vaultBalance + bankBalance;
+
+//     // Protect the emergency fund target from other savings goals.
+//     const usableSavings = Math.max(
+//       totalCash - emergencyTarget,
+//       0
+//     );
+
+//     const goalAmount = Math.max(Number(getGoalAmount()) || 0, 0);
+//     const remainingGoal = Math.max(
+//       goalAmount - usableSavings,
+//       0
+//     );
+
+//     const surplus = income - expenses;
+
+//     if (remainingGoal === 0) {
+//       return {
+//         status: "complete",
+//         goalAmount,
+//         remainingGoal: 0,
+//         months: 0
+//       };
+//     }
+
+//     if (surplus <= 0) {
+//       return {
+//         status: "nosurplus",
+//         goalAmount,
+//         remainingGoal
+//       };
+//     }
+
+//     const savingsPerMonth = surplus * 0.75;
+//     const months = Math.ceil(
+//       remainingGoal / savingsPerMonth
+//     );
+
+//     return {
+//       status: "progress",
+//       months,
+//       goalAmount,
+//       remainingGoal,
+//       savingsPerMonth
+//     };
+
+//   } catch (err) {
+//     console.warn("Goal calculation failed", err);
+//     return { status: "error" };
+//   }
+// }
+
+// window.calculateMonthsToGoal = calculateMonthsToGoal;
 
   /* ================= ANIMATION ================= */
 
@@ -419,9 +591,9 @@ async function updateGoalMessage() {
 
       case "progress":
         message =
-          `Goal: ${money(data.goalAmount)} | ` +
-          `${money(data.remainingGoal)} remaining | ` +
-          `${data.months} month${data.months > 1 ? "s" : ""} to goal`;
+          `Your goal to save ${money(data.goalAmount)} is underway.` +
+          `Only ${money(data.remainingGoal)} remaining.` +
+          `  I estimate you save for about ${data.months} month${data.months > 1 ? "s" : ""}`;
         color = "lightblue";
         break;
 

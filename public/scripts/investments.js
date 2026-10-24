@@ -53,6 +53,24 @@ async function deleteInvestment(id) {
   );
 }
 
+
+/* ================= MONEY MARKET TOTAL ================= */
+
+window.getMoneyMarketTotal = async function () {
+  const investments = await fetchInvestments();
+
+  return investments.reduce((sum, entry) => {
+    if (
+      String(entry.asset || '').trim().toLowerCase() === 'money market'
+    ) {
+      return sum + (Number(entry.value) || 0);
+    }
+
+    return sum;
+  }, 0);
+};
+
+
 /* ================= RENDER ================= */
 
 function renderInvestments(investments) {

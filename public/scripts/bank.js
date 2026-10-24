@@ -49,6 +49,29 @@ async function deleteBankAccount(id) {
   });
 }
 
+
+/* ================= AVAILABLE CHECKING CASH ================= */
+
+window.getAvailableCheckingCash = async function () {
+  const bankBalance = window.getBanksTotal
+    ? Number(await window.getBanksTotal()) || 0
+    : 0;
+
+  const emergencyData = await window.calculateEmergencyFund();
+
+  if (!emergencyData) {
+    throw new Error('Could not calculate emergency fund target.');
+  }
+
+  const emergencyTarget = Math.max(
+    Number(emergencyData.target) || 0,
+    0
+  );
+
+  return Math.max(bankBalance - emergencyTarget, 0);
+};
+
+
 /* ================= RENDER TABLE ================= */
 
 function renderBanks(accounts) {
