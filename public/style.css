@@ -1168,3 +1168,149 @@ tbody tr:hover {
     transition-duration: .01ms !important;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================
+   CLEAN FINANCIAL TABLES
+   Add this at the VERY END of your CSS
+   ========================================= */
+
+table {
+  width: 100%;
+  margin: 16px 0 24px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  border-spacing: 0;
+  border-collapse: separate;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 4px 16px rgba(20, 40, 25, 0.04);
+}
+
+/* Clean, understated table headers */
+thead {
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+thead th {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+/* Comfortable, consistent rows */
+tbody td {
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+  line-height: 1.5;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Remove strong alternating stripes */
+tbody tr:nth-child(even) {
+  background: transparent;
+}
+
+/* Subtle hover feedback */
+tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+tbody tr:hover {
+  background: var(--green-pale);
+}
+
+/* Keep clickable metal names looking intentional */
+#metalsTable .metals-cell {
+  font-weight: 750;
+  color: var(--green-bright);
+  cursor: pointer;
+}
+
+#metalsTable .metals-cell:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Compact quantity-removal input */
+#metalsTable .removeMetalQty,
+#vaultTable .removeCashAmount {
+  width: 64px;
+  min-width: 64px;
+  min-height: 34px;
+  margin: 0 6px 0 0;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+  text-align: center;
+}
+
+/* Consistent, restrained action buttons */
+#metalsTable .deleteMetalBtn,
+#vaultTable .deleteCashBtn {
+  min-height: 32px;
+  margin: 0;
+  padding: 7px 11px;
+  border: 1px solid rgba(185, 74, 72, 0.22);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--red);
+  font-size: 11px;
+  font-weight: 750;
+  white-space: nowrap;
+  box-shadow: none;
+}
+
+#metalsTable .deleteMetalBtn:hover,
+#vaultTable .deleteCashBtn:hover {
+  background: var(--red);
+  color: #fff;
+  transform: none;
+}
+
+/* Keep action controls aligned */
+#metalsTable td:last-child,
+#vaultTable td:last-child {
+  white-space: nowrap;
+}
+
+/* Responsive table scrolling */
+@media (max-width: 768px) {
+  table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    border-radius: 10px;
+  }
+
+  thead th,
+  tbody td {
+    padding: 11px 12px;
+  }
+}

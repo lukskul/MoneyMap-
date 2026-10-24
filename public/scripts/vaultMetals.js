@@ -40,16 +40,28 @@ function groupHoldings(holdings) {
   return Object.values(grouped);
 }
 
+
 /* ================= RENDER TABLE ================= */
 let currentFilter = null;
 
 async function renderMetals(spotPrices, holdings, filterMetals = null) {
   const grouped = groupHoldings(holdings);
   const table = document.getElementById('metalsTable');
+
+  if (!table) return;
+
   table.innerHTML = '';
 
-  const uniqueDesigns = [...new Set(holdings.map(h => h.design).filter(Boolean))];
-  document.getElementById('designs').innerHTML = uniqueDesigns.map(d => `<option value="${d}">`).join('');
+  const designs = document.getElementById('designs');
+  if (designs) {
+    designs.innerHTML = '';
+    [...new Set(holdings.map(h => h.design).filter(Boolean))]
+      .forEach(design => {
+        const option = document.createElement('option');
+        option.value = design;
+        designs.appendChild(option);
+      });
+  }
 
   let totalValue = 0;
 
@@ -58,37 +70,152 @@ async function renderMetals(spotPrices, holdings, filterMetals = null) {
 
     const spot = spotPrices[item.metals] || 0;
     const value = item.ounces * spot;
-    const cost = item.ounces * item.buyPrice;
+    const cost = item.totalBuy;
     const gainLoss = value - cost;
 
     totalValue += value;
 
+    // Find the quantity of matching underlying holdings.
+    const matchingHoldings = holdings.filter(h =>
+      h.metals === item.metals &&
+      (h.design || '') === (item.design || '')
+    );
+
+    const totalQuantity = matchingHoldings.reduce(
+      (sum, h) => sum + (Number(h.quantity) || 0),
+      0
+    );
+
     const row = document.createElement('tr');
-    row.setAttribute('data-metals', item.metals);
-    row.innerHTML = `
-      <td class="metals-cell" style="cursor:pointer">${item.metals}</td>
-      <td>${item.design || '-'}</td>
-      <td>${item.ounces}</td>
-      <td>$${item.buyPrice.toFixed(2)}</td>
-      <td>$${spot.toFixed(2)}</td>
-      <td style="color:${gainLoss >= 0 ? 'lightgreen' : 'lightblue'}">$${gainLoss.toFixed(2)}</td>
-      <td style="color:green">$${value.toFixed(2)}</td>
-    `;
+    row.dataset.metals = item.metals;
+    row.dataset.design = item.design || '';
+
+    const metalCell = document.createElement('td');
+    metalCell.className = 'metals-cell';
+    metalCell.style.cursor = 'pointer';
+    metalCell.textContent = item.metals;
+
+    const designCell = document.createElement('td');
+    designCell.textContent = item.design || '-';
+
+    const ouncesCell = document.createElement('td');
+    ouncesCell.textContent = Number(item.ounces.toFixed(4)).toString();
+
+    const buyPriceCell = document.createElement('td');
+    buyPriceCell.textContent = `$${item.buyPrice.toFixed(2)}`;
+
+    const spotCell = document.createElement('td');
+    spotCell.textContent = `$${spot.toFixed(2)}`;
+
+    const gainLossCell = document.createElement('td');
+    gainLossCell.style.color = gainLoss >= 0 ? 'lightgreen' : 'lightblue';
+    gainLossCell.textContent = `$${gainLoss.toFixed(2)}`;
+
+    const valueCell = document.createElement('td');
+    valueCell.style.color = 'green';
+    valueCell.textContent = `$${value.toFixed(2)}`;
+
+    // Quantity-removal controls.
+    const actionCell = document.createElement('td');
+
+    const quantityInput = document.createElement('input');
+    quantityInput.type = 'number';
+    quantityInput.min = '1';
+    quantityInput.max = String(totalQuantity);
+    quantityInput.step = '1';
+    quantityInput.value = '1';
+    quantityInput.className = 'removeMetalQty';
+    quantityInput.style.width = '60px';
+
+    const removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'deleteMetalBtn';
+    removeButton.textContent = 'Remove';
+
+    actionCell.append(quantityInput, removeButton);
+
+    row.append(
+      metalCell,
+      designCell,
+      ouncesCell,
+      buyPriceCell,
+      spotCell,
+      gainLossCell,
+      valueCell,
+      actionCell
+    );
+
     table.appendChild(row);
 
-    row.querySelector('.metals-cell').addEventListener('click', async () => {
+    metalCell.addEventListener('click', async () => {
       currentFilter = currentFilter === item.metals ? null : item.metals;
       await renderMetals(spotPrices, holdings, currentFilter);
       window.updateTotalAssets && window.updateTotalAssets();
     });
   });
 
-  document.getElementById('portfolioValue').textContent = `$${totalValue.toFixed(2)}`;
+  const portfolioValue = document.getElementById('portfolioValue');
+  if (portfolioValue) {
+    portfolioValue.textContent = `$${totalValue.toFixed(2)}`;
+  }
 
-  // Expose bucket total for total-assets.js
   window.bucketTotals = window.bucketTotals || {};
   window.bucketTotals.metals = totalValue;
+
+  // Attach once so the handler survives table rerenders.
+  if (!table.dataset.removeHandlerAttached) {
+    table.addEventListener('click', async event => {
+      const button = event.target.closest('.deleteMetalBtn');
+      if (!button) return;
+
+      const row = button.closest('tr');
+      const quantityInput = row.querySelector('.removeMetalQty');
+      const quantity = Number(quantityInput.value);
+
+      const metals = row.dataset.metals;
+      const design = row.dataset.design;
+
+      if (
+        !Number.isInteger(quantity) ||
+        quantity < 1 ||
+        quantity > Number(quantityInput.max)
+      ) {
+        alert('Enter a valid whole-number quantity to remove.');
+        return;
+      }
+
+      if (!confirm(`Remove ${quantity} ${metals} item(s) with design "${design || 'Unspecified'}"?`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/metals/remove-quantity', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ metals, design, quantity })
+        });
+
+        if (!response.ok) {
+          const message = await response.text();
+          throw new Error(message || 'Failed to remove metal quantity.');
+        }
+
+        const updatedHoldings = await fetchHoldings();
+        await renderMetals(spotPrices, updatedHoldings, currentFilter);
+
+        if (window.updateTotalAssets) {
+          window.updateTotalAssets();
+        }
+      } catch (error) {
+        console.error('Failed to remove metal quantity:', error);
+        alert(error.message || 'Failed to remove metal quantity.');
+      }
+    });
+
+    table.dataset.removeHandlerAttached = 'true';
+  }
 }
+
 
 /* ================= UPDATE UI ================= */
 async function updateUI() {
@@ -219,6 +346,22 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   validateForm();
+});
+
+document.querySelectorAll('.deleteMetalBtn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const id = btn.dataset.id;
+
+    if (!confirm('Delete this metal holding?')) return;
+
+    try {
+      await deleteMetalHolding(id);
+      await updateMetalsUI();
+    } catch (err) {
+      console.error('Error deleting metal holding:', err);
+      alert(err.message || 'Could not delete metal holding.');
+    }
+  });
 });
 
 

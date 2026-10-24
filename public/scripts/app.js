@@ -74,7 +74,7 @@
       $('#password').value = '';
       showDashboard();
       await loadAll();
-      navigate('overview');
+      //navigate('overview');
     } catch (error) {
       message.textContent = error.message || 'Could not sign in.';
     } finally { button.disabled = false; }
@@ -115,13 +115,13 @@ async function checkSession() {
   }
 }
 
-  // $('#logout-button').addEventListener('click', async () => {
-  //   try { await api('/api/auth/logout', { method: 'POST' }); } catch { /* Still return to the sign-in screen. */ }
-  //   state.user = null;
-  //   state.records = { metals: [], vault: [], banks: [], investments: [] };
-  //   state.profile = {};
-  //   showAuth();
-  // });
+  $('#logout-button').addEventListener('click', async () => {
+    try { await api('/api/auth/logout', { method: 'POST' }); } catch { /* Still return to the sign-in screen. */ }
+    state.user = null;
+    state.records = { metals: [], vault: [], banks: [], investments: [] };
+    state.profile = {};
+    showAuth();
+  });
 
   // const titles = { overview: 'Overview', metals: 'Metals', vault: 'Vault', banks: 'Bank accounts', investments: 'Investments', profile: 'Goals & profile' };
   // function navigate(view) {
@@ -143,12 +143,12 @@ async function checkSession() {
   //   const deleteButton = event.target.closest('[data-delete-record]');
   //   if (deleteButton) askDelete(deleteButton.dataset.deleteRecord, Number(deleteButton.dataset.index));
   // });
-  // $('#refresh-button').addEventListener('click', async () => {
-  //   $('#refresh-button').disabled = true;
-  //   try { await loadAll(); showGlobal('Your data has been refreshed.', 'success'); }
-  //   catch (error) { showGlobal(error.message, 'error'); }
-  //   finally { $('#refresh-button').disabled = false; }
-  // });
+  $('#refresh-button').addEventListener('click', async () => {
+    $('#refresh-button').disabled = true;
+    try { await loadAll(); showGlobal('Your data has been refreshed.', 'success'); }
+    catch (error) { showGlobal(error.message, 'error'); }
+    finally { $('#refresh-button').disabled = false; }
+  });
 
   function showGlobal(message, type = '') {
     const element = $('#global-message');

@@ -44,11 +44,15 @@ window.getVaultTotal = window.getvaultCashTotal;
 
 
 
+
 /* ================= RENDER ================= */
 
 async function renderVault() {
   const vault = await fetchVault();
   const table = document.getElementById('vaultTable');
+
+  if (!table) return;
+
   table.innerHTML = '';
 
   // Group entries for display without changing the saved JSON.
@@ -56,9 +60,10 @@ async function renderVault() {
 
   vault.forEach(entry => {
     const denomination = Number(entry.denomination);
-    const year = entry.year == null || entry.year === ''
-      ? 'Assorted'
-      : String(entry.year);
+    const year =
+      entry.year == null || entry.year === ''
+        ? 'Assorted'
+        : String(entry.year);
 
     const key = `${denomination}|${year}`;
 
@@ -81,17 +86,54 @@ async function renderVault() {
     totalValue += rowTotal;
 
     const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>$${entry.denomination}</td>
-      <td>${entry.year}</td>
-      <td>${entry.quantity}</td>
-      <td>$${rowTotal.toFixed(2)}</td>
-    `;
+
+    const denominationCell = document.createElement('td');
+    denominationCell.textContent = `$${entry.denomination}`;
+
+    const yearCell = document.createElement('td');
+    yearCell.textContent = entry.year;
+
+    const quantityCell = document.createElement('td');
+    quantityCell.textContent = entry.quantity;
+
+    const totalCell = document.createElement('td');
+    totalCell.textContent = `$${rowTotal.toFixed(2)}`;
+
+    // Quantity to remove.
+    const actionCell = document.createElement('td');
+
+    const amountInput = document.createElement('input');
+    amountInput.type = 'number';
+    amountInput.min = '1';
+    amountInput.step = '1';
+    amountInput.max = String(entry.quantity);
+    amountInput.value = '1';
+    amountInput.className = 'removeCashAmount';
+    amountInput.style.width = '70px';
+
+    const deleteButton = document.createElement('button');
+    deleteButton.type = 'button';
+    deleteButton.className = 'deleteCashBtn';
+    deleteButton.textContent = 'Remove';
+
+    deleteButton.dataset.denomination = String(entry.denomination);
+    deleteButton.dataset.year = entry.year;
+    deleteButton.dataset.quantity = String(entry.quantity);
+
+    actionCell.append(amountInput, deleteButton);
+
+    row.append(
+      denominationCell,
+      yearCell,
+      quantityCell,
+      totalCell,
+      actionCell
+    );
 
     table.appendChild(row);
   });
 
-  // Update per-bucket total display.
+  // Update total display.
   const vaultCashTotalEl = document.getElementById('vaultCashTotal');
 
   if (vaultCashTotalEl) {
@@ -99,9 +141,90 @@ async function renderVault() {
     animateVaultDisplay(totalValue);
   }
 
-  // Update bucketTotals for total-assets.
   window.bucketTotals = window.bucketTotals || {};
   window.bucketTotals.vault = totalValue;
+
+  // Attach the click handler once; it continues working after rerenders.
+  if (!table.dataset.removeHandlerAttached) {
+    table.addEventListener('click', async event => {
+      const button = event.target.closest('.deleteCashBtn');
+      if (!button) return;
+
+      const row = button.closest('tr');
+      const amountInput = row.querySelector('.removeCashAmount');
+
+      const denomination = Number(button.dataset.denomination);
+      const year = button.dataset.year;
+      const quantity = Number(amountInput.value);
+
+      if (
+        !Number.isInteger(quantity) ||
+        quantity < 1 ||
+        quantity > Number(button.dataset.quantity)
+      ) {
+        alert('Enter a valid whole number of bills to remove.');
+        return;
+      }
+
+      if (!confirm(`Remove ${quantity} $${denomination} bill(s) from ${year}?`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/vault/remove-quantity', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ denomination, year, quantity })
+        });
+
+        if (!response.ok) {
+          const message = await response.text();
+          throw new Error(message || 'Failed to remove bills.');
+        }
+
+        await renderVault();
+      } catch (error) {
+        console.error('Failed to remove vault cash:', error);
+        alert(error.message || 'Failed to remove bills.');
+      }
+    });
+
+    table.dataset.removeHandlerAttached = 'true';
+  }
+}
+
+
+
+/*============ Delete quantity ===============*/
+
+async function removeMetalQuantity(id, quantity) {
+  const response = await fetch(
+    `/api/metals/${encodeURIComponent(id)}/remove-quantity`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ quantity: Number(quantity) })
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(await response.text() || 'Could not remove metal quantity.');
+  }
+}
+
+async function removeCashAmount(id, amount) {
+  const response = await fetch(
+    `/api/cash/${encodeURIComponent(id)}/remove-amount`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount: Number(amount) })
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(await response.text() || 'Could not remove cash amount.');
+  }
 }
 
 
@@ -216,6 +339,22 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   validate();
+});
+
+document.querySelectorAll('.deleteCashBtn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const id = btn.dataset.id;
+
+    if (!confirm('Delete this cash account?')) return;
+
+    try {
+      await deleteCashAccount(id);
+      await updateCashUI();
+    } catch (err) {
+      console.error('Error deleting cash account:', err);
+      alert(err.message || 'Could not delete cash account.');
+    }
+  });
 });
 
 

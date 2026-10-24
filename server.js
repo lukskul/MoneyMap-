@@ -488,6 +488,232 @@ app.get('/api/metals', (req, res) => {
   res.json(metals);
 });
 
+
+app.post('/api/metals', (req, res) => {
+  try {
+    const file = req.userFiles.metals;
+    const data = readJSON(file, { holdings: [] });
+
+    const { metals, weight, quantity, buyPrice, design } = req.body;
+
+    // Validate the submitted holding
+    if (
+      typeof metals !== 'string' || !metals.trim() ||
+      typeof design !== 'string' || !design.trim() ||
+      !Number.isFinite(weight) || weight <= 0 ||
+      !Number.isInteger(quantity) || quantity <= 0 ||
+      !Number.isFinite(buyPrice) || buyPrice < 0
+    ) {
+      return res.status(400).json({
+        error: 'Invalid metal holding data.'
+      });
+    }
+
+    // Add the new holding
+    data.holdings = Array.isArray(data.holdings)
+      ? data.holdings
+      : [];
+
+    const { randomUUID } = require('crypto');
+
+    data.holdings.push({
+      id: randomUUID(),
+      metals: metals.trim(),
+      weight,
+      quantity,
+      buyPrice,
+      design: design.trim()
+    });
+
+    // Save using the same file format as GET /api/metals
+    fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
+
+    return res.status(201).json({
+      success: true,
+      holding: data.holdings[data.holdings.length - 1],
+      holdings: data.holdings
+    });
+  } catch (error) {
+    console.error('Error saving metal holding:', error);
+    return res.status(500).json({
+      error: 'Failed to save metal holding.'
+    });
+  }
+});
+
+
+/* DELETE metal holding */
+app.delete('/api/metals/:id', (req, res) => {
+  const { id } = req.params;
+  const metals = readJSON(req.userFiles.metals, { holdings: [] });
+
+  const index = metals.holdings.findIndex(
+    item => String(item.id) === id
+  );
+
+  if (index === -1) {
+    return res.status(404).send('Metal holding not found');
+  }
+
+  metals.holdings.splice(index, 1);
+  writeJSON(req.userFiles.metals, metals, res);
+});
+
+
+/* DELETE cash account */
+app.delete('/api/cash/:id', (req, res) => {
+  const { id } = req.params;
+  const cash = readJSON(req.userFiles.cash, { accounts: [] });
+
+  const index = cash.accounts.findIndex(
+    item => String(item.id) === id
+  );
+
+  if (index === -1) {
+    return res.status(404).send('Cash account not found');
+  }
+
+  cash.accounts.splice(index, 1);
+  writeJSON(req.userFiles.cash, cash, res);
+});
+
+/*======== REMOVE A QUANTITY FROM A METAL HOLDING ==========*/
+
+app.post('/api/metals/remove-quantity', (req, res) => {
+  try {
+    const { metals, design, quantity } = req.body;
+
+    if (
+      typeof metals !== 'string' ||
+      !metals.trim() ||
+      typeof design !== 'string' ||
+      !Number.isInteger(quantity) ||
+      quantity < 1
+    ) {
+      return res.status(400).send('Invalid metal removal request.');
+    }
+
+    const file = req.userFiles.metals;
+    const data = readJSON(file, { holdings: [] });
+
+    data.holdings = Array.isArray(data.holdings) ? data.holdings : [];
+
+    const matches = item =>
+      item.metals === metals &&
+      (item.design || '') === design;
+
+    const available = data.holdings
+      .filter(matches)
+      .reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+
+    if (quantity > available) {
+      return res.status(400).send('Not enough matching items to remove.');
+    }
+
+    let remaining = quantity;
+
+    for (
+      let i = data.holdings.length - 1;
+      i >= 0 && remaining > 0;
+      i--
+    ) {
+      const item = data.holdings[i];
+      if (!matches(item)) continue;
+
+      const currentQuantity = Number(item.quantity) || 0;
+      const removeCount = Math.min(currentQuantity, remaining);
+
+      item.quantity = currentQuantity - removeCount;
+      remaining -= removeCount;
+
+      if (item.quantity === 0) {
+        data.holdings.splice(i, 1);
+      }
+    }
+
+    fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
+
+    return res.json({
+      success: true,
+      holdings: data.holdings
+    });
+  } catch (error) {
+    console.error('Error removing metal quantity:', error);
+    return res.status(500).send('Failed to remove metal quantity.');
+  }
+});
+
+
+/*=====. Remove quantity from Cash deposits.=========*/
+
+app.post('/api/vault/remove-quantity', (req, res) => {
+  try {
+    const { denomination, year, quantity } = req.body;
+
+    if (
+      !Number.isFinite(denomination) ||
+      !Number.isInteger(quantity) ||
+      quantity < 1 ||
+      typeof year !== 'string'
+    ) {
+      return res.status(400).send('Invalid removal request.');
+    }
+
+    const file = req.userFiles.vault;
+    const data = readJSON(file, { vault: [] });
+
+    data.vault = Array.isArray(data.vault) ? data.vault : [];
+
+    const matchesYear = entry => {
+      const entryYear =
+        entry.year == null || entry.year === ''
+          ? 'Assorted'
+          : String(entry.year);
+
+      return (
+        Number(entry.denomination) === denomination &&
+        entryYear === year
+      );
+    };
+
+    const available = data.vault
+      .filter(matchesYear)
+      .reduce((sum, entry) => sum + (Number(entry.quantity) || 0), 0);
+
+    if (quantity > available) {
+      return res.status(400).send('Not enough bills available to remove.');
+    }
+
+    let remaining = quantity;
+
+    // Reduce matching entries; remove records that reach zero.
+    for (let i = data.vault.length - 1; i >= 0 && remaining > 0; i--) {
+      const entry = data.vault[i];
+
+      if (!matchesYear(entry)) continue;
+
+      const entryQuantity = Number(entry.quantity) || 0;
+      const toRemove = Math.min(entryQuantity, remaining);
+
+      entry.quantity = entryQuantity - toRemove;
+      remaining -= toRemove;
+
+      if (entry.quantity === 0) {
+        data.vault.splice(i, 1);
+      }
+    }
+
+    fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
+
+    return res.json({ success: true, vault: data.vault });
+  } catch (error) {
+    console.error('Error removing vault cash:', error);
+    return res.status(500).send('Failed to remove vault cash.');
+  }
+});
+
+
+
 /* ================= BANKS API ================= */
 
 // GET all accounts
@@ -601,22 +827,24 @@ app.put('/api/investments/:id', (req, res) => {
   writeJSON(req.userFiles.investments, data, res);
 });
 
-// // DELETE
-// app.delete('/api/investments/:id', (req, res) => {
-//   const { id } = req.params;
 
-//   const data = readJSON(files.investments, { investments: [] });
+/* DELETE investment */
+app.delete('/api/investments/:id', (req, res) => {
+  const { id } = req.params;
+  const investments = readJSON(req.userFiles.investments, { investments: [] });
 
-//   const index = data.investments.findIndex(inv => inv.id === id);
+  const index = investments.investments.findIndex(
+    item => String(item.id) === id
+  );
 
-//   if (index === -1) {
-//     return res.status(404).send('Investment not found');
-//   }
+  if (index === -1) {
+    return res.status(404).send('Investment not found');
+  }
 
-//   data.investments.splice(index, 1);
+  investments.investments.splice(index, 1);
+  writeJSON(req.userFiles.investments, investments, res);
+});
 
-//   writeJSON(files.investments, data, res);
-// });
 
 
 /* ================= START SERVER ================= */
