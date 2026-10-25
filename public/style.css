@@ -213,7 +213,7 @@ span {
 
 /* ================= BUTTONS ================= */
 button, .toggle-btn {
-  background-color: green;
+  background-color: #3498db;
   color: #fff;
   border: none;
   padding: 0.4rem 0.8rem;
@@ -225,12 +225,12 @@ button, .toggle-btn {
 }
 
 button:hover, .toggle-btn:hover {
-  background-color: rgb(96, 183, 96);
+  background-color: #2980b9;
   transform: translateY(-1px);
 }
 
 button:disabled {
-  background-color: darkgreen;
+  background-color: #ccc;
   cursor: not-allowed;
 }
 
@@ -281,7 +281,7 @@ table {
 }
 
 thead {
-  background-color: var(--green);
+  background-color: #3498db;
   color: #fff;
 }
 
@@ -1611,7 +1611,7 @@ input::placeholder, textarea::placeholder {
 }
 
 /* ==========================================================================
-   UI INTEGRATION LAYER
+   VESSELS UI INTEGRATION LAYER
    Unifies the original application components with the newer green dashboard
    and authentication design system. Keep this section last so shared styles
    remain consistent without changing the application's HTML or JavaScript.
@@ -2158,7 +2158,7 @@ tbody tr:hover {
   min-height: 32px;
   margin: 0;
   padding: 7px 11px;
-  border: 1px solid white;
+  border: 1px solid rgba(185, 74, 72, 0.22);
   border-radius: 7px;
   background: transparent;
   color: var(--red);
@@ -2196,3 +2196,266 @@ tbody tr:hover {
     padding: 11px 12px;
   }
 }
+
+/* ================= CONSISTENT BUTTON SYSTEM ================= */
+/* Final override layer: one visual language for the Money Map finance app. */
+:root {
+  --button-radius: 9px;
+  --button-height: 38px;
+  --button-primary: var(--green, #176b45);
+  --button-primary-hover: var(--green-bright, #2b9363);
+  --button-danger: var(--red, #b94a48);
+}
+
+/* Shared baseline. Keep spacing on parent layouts rather than on each button. */
+button,
+.toggle-btn {
+  box-sizing: border-box;
+  min-height: var(--button-height);
+  margin: 0;
+  padding: 9px 14px;
+  border: 1px solid transparent;
+  border-radius: var(--button-radius);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.25;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+/* Plain buttons default to the primary action style. Named controls below
+   deliberately opt out where they need a quieter or more specific treatment. */
+button:not(.nav-item):not(.text-button):not(.logout-button):not(.icon-button):not(.deleteMetalBtn):not(.deleteCashBtn) {
+  background: var(--button-primary);
+  color: #fff;
+}
+
+button:not(.nav-item):not(.text-button):not(.logout-button):not(.icon-button):not(.deleteMetalBtn):not(.deleteCashBtn):hover {
+  background: var(--button-primary-hover);
+  transform: translateY(-1px);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+button:disabled,
+button[disabled] {
+  opacity: 0.52;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none;
+}
+
+button:focus-visible,
+.toggle-btn:focus-visible {
+  outline: 3px solid rgba(43, 147, 99, 0.35);
+  outline-offset: 2px;
+}
+
+/* Primary actions */
+.primary-button,
+.settings-btn,
+.portfolio-btn,
+.auth-card .primary-button {
+  background: var(--button-primary);
+  color: #fff;
+  border-color: transparent;
+}
+
+.primary-button:hover,
+.settings-btn:hover,
+.portfolio-btn:hover,
+.auth-card .primary-button:hover {
+  background: var(--button-primary-hover);
+  color: #fff;
+}
+
+/* Secondary actions */
+.secondary-button {
+  background: var(--surface, #fff);
+  color: var(--text, #1b2921);
+  border-color: var(--line, #e5ebe6);
+}
+
+.secondary-button:hover {
+  background: var(--surface-2, #f7f9f7);
+  color: var(--text, #1b2921);
+  border-color: var(--line, #e5ebe6);
+  transform: none;
+}
+
+/* Destructive actions */
+.danger-button {
+  background: var(--button-danger);
+  color: #fff;
+  border-color: transparent;
+}
+
+.danger-button:hover {
+  background: #9f3b39;
+  color: #fff;
+}
+
+/* Navigation should read as navigation, not as a row of primary actions. */
+.nav-item {
+  min-height: 38px;
+  background: transparent;
+  color: var(--muted, #748077);
+  border-color: transparent;
+  transform: none;
+}
+
+.nav-item:hover {
+  background: var(--surface-2, #f7f9f7);
+  color: var(--text, #1b2921);
+  transform: none;
+}
+
+.nav-item.active {
+  background: var(--green-pale, #e8f4ec);
+  color: var(--green-bright, #2b9363);
+}
+
+/* Low-emphasis text actions */
+.text-button,
+.logout-button {
+  min-height: 32px;
+  padding: 6px 8px;
+  background: transparent !important;
+  border-color: transparent !important;
+  color: var(--green-bright, #2b9363);
+  box-shadow: none;
+  transform: none;
+}
+
+.text-button:hover,
+.logout-button:hover {
+  background: transparent !important;
+  color: var(--green, #176b45);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transform: none;
+}
+
+.logout-button:hover {
+  color: var(--button-danger);
+}
+
+/* Compact icon controls */
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+  background: var(--surface, #fff);
+  color: var(--muted, #748077);
+  border: 1px solid var(--line, #e5ebe6);
+  box-shadow: none;
+  transform: none;
+}
+
+.icon-button:hover {
+  background: var(--surface-2, #f7f9f7);
+  color: var(--text, #1b2921);
+  transform: none;
+}
+
+/* Quick links are content links, not filled buttons. */
+.quick-links button {
+  min-height: auto;
+  padding: 12px 0;
+  background: transparent !important;
+  color: var(--text, #1b2921);
+  border-color: transparent;
+  box-shadow: none;
+  transform: none;
+}
+
+.quick-links button:hover {
+  background: transparent !important;
+  color: var(--green-bright, #2b9363);
+  transform: none;
+}
+
+/* Record-level actions stay compact and visually secondary. */
+.record-actions button {
+  min-height: 30px;
+  padding: 6px 9px;
+  background: var(--surface-2, #f7f9f7);
+  color: var(--text, #1b2921);
+  border-color: var(--line, #e5ebe6);
+  font-size: 11px;
+  transform: none;
+}
+
+.record-actions button:hover {
+  background: var(--surface, #fff);
+  border-color: var(--green-bright, #2b9363);
+  transform: none;
+}
+
+.record-actions button:last-child {
+  color: var(--button-danger);
+}
+
+/* Table delete controls remain restrained until hovered. */
+#metalsTable .deleteMetalBtn,
+#vaultTable .deleteCashBtn,
+.deleteMetalBtn,
+.deleteCashBtn {
+  min-height: 32px;
+  padding: 7px 11px;
+  background: transparent !important;
+  color: var(--button-danger) !important;
+  border: 1px solid rgba(185, 74, 72, 0.28) !important;
+  border-radius: 7px;
+  box-shadow: none;
+  font-size: 11px;
+  font-weight: 750;
+  white-space: nowrap;
+  transform: none;
+}
+
+#metalsTable .deleteMetalBtn:hover,
+#vaultTable .deleteCashBtn:hover,
+.deleteMetalBtn:hover,
+.deleteCashBtn:hover {
+  background: var(--button-danger) !important;
+  color: #fff !important;
+  border-color: var(--button-danger) !important;
+  transform: none;
+}
+
+/* Settings actions can fill their panel; compact controls stay compact. */
+.settings-panel button {
+  width: 100%;
+}
+
+.settings-panel .text-button,
+.settings-panel .icon-button {
+  width: auto;
+}
+
+/* Respect reduced-motion preferences. */
+@media (prefers-reduced-motion: reduce) {
+  button,
+  .toggle-btn {
+    transition: none !important;
+  }
+
+  button:hover {
+    transform: none !important;
+  }
+}
+

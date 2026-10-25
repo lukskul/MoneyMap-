@@ -11,8 +11,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const loanInputs = document.getElementById("loanInputs");
   const customSavingsInput = document.getElementById("customSavingsInput");
 
-  const incomeInput = document.getElementById("monthlyIncome");
-  const expensesInput = document.getElementById("monthlyExpenses");
+  const incomeInput = document.getElementById("setting-monthlyIncome");
+  const expensesInput = document.getElementById("setting-monthlyExpenses");
   const emergencyInput = document.getElementById("emergencyMonths");
 
   const loanInput = document.getElementById("loanInput");
